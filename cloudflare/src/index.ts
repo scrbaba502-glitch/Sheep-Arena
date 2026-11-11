@@ -1,3 +1,5 @@
+import { DurableObject } from "cloudflare:workers";
+
 export interface Env {
   MATCH_ROOMS: DurableObjectNamespace<MatchRoom>;
   ALLOWED_ORIGIN?: string;
@@ -108,13 +110,9 @@ const MAX_MESSAGE_BYTES = 2048;
 const MAX_MESSAGES_PER_SECOND = 12;
 const ROOM_IDLE_MS = 2 * 60 * 1000;
 
-export class MatchRoom implements DurableObject {
-  private readonly ctx: DurableObjectState;
-  private readonly env: Env;
-
+export class MatchRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
-    this.ctx = ctx;
-    this.env = env;
+    super(ctx, env);
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -128,6 +126,7 @@ export class MatchRoom implements DurableObject {
       await this.ctx.storage.put("players", { p1: token, p2: null });
       await this.ctx.storage.put("presence", { p1: {}, p2: {} });
       await this.ctx.storage.put("lastActivity", Date.now());
+      await this.ctx.storage.setAlarm(Date.now() + 10 * 60 * 1000);
       return Response.json({ playerToken: token, player: "p1" }, { status: 201 });
     }
 
@@ -139,6 +138,7 @@ export class MatchRoom implements DurableObject {
       players.p2 = token;
       await this.ctx.storage.put("players", players);
       await this.ctx.storage.put("lastActivity", Date.now());
+      await this.ctx.storage.setAlarm(Date.now() + 10 * 60 * 1000);
       return Response.json({ playerToken: token, player: "p2" }, { status: 200 });
     }
 
@@ -150,12 +150,18 @@ export class MatchRoom implements DurableObject {
       const playerId: PlayerId | null = token === players.p1 ? "p1" : token === players.p2 ? "p2" : null;
       if (!playerId) return Response.json({ error: "invalid_token" }, { status: 401 });
 
+      for (const existing of this.ctx.getWebSockets()) {
+        const current = existing.deserializeAttachment() as PlayerAttachment | null;
+        if (current?.playerId === playerId) this.close(existing, 4001, "session_replaced");
+      }
       const pair = new WebSocketPair();
       const client = pair[0];
       const server = pair[1];
       this.ctx.acceptWebSocket(server);
       server.serializeAttachment({ playerId, lastMessageAt: 0, messageWindowAt: Date.now(), messageCount: 0 } satisfies PlayerAttachment);
       server.send(JSON.stringify({ type: "connected", player: playerId, protocol: 1 }));
+      const presence = (await this.ctx.storage.get<Record<PlayerId, PlayerPresence>>("presence")) ?? { p1: {}, p2: {} };
+      server.send(JSON.stringify({ type: "room_snapshot", presence }));
       await this.ctx.storage.put("lastActivity", Date.now());
       this.broadcast({ type: "peer_state", player: playerId, connected: true }, server);
       return new Response(null, { status: 101, webSocket: client });
