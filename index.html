@@ -139,7 +139,7 @@ async function swap(a,b){
    cloudBoard(result.board);const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
    for(const hit of (result.attacks||[]))await act(hit.kind,"p",0);
    busy=over;
-  }catch(error){snd("bad");busy=false}
+  }catch(error){snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())}
   return;
  }
  clearHint();busy=true;sw(a,b);await sleep(190);const g=find();if(!g.length){sw(a,b);snd("bad");await sleep(190);busy=false;return}await resolve(g);if(!over&&!hasMove())reroll();busy=over
@@ -166,7 +166,7 @@ $("slam").onclick=()=>{
   room.special().then(result=>{
    const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
    return act("slam","p",0);
-  }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=false});
+  }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())});
   return;
  }
  if(rage>=100&&L>=3&&!over){rage=0;ui();act("slam","p",46)}
