@@ -4,6 +4,10 @@ import vm from "node:vm";
 import { setTimeout as delay } from "node:timers/promises";
 import { once } from "node:events";
 
+const withTimeout = (promise, label, ms = 12000) => new Promise((resolve, reject) => {
+  const timer = setTimeout(() => reject(new Error("Timed out waiting for " + label)), ms);
+  Promise.resolve(promise).then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+});
 const PORT = 8787;
 const BASE = "http://127.0.0.1:" + PORT;
 const child = spawn(process.execPath, ["node_modules/wrangler/bin/wrangler.js", "dev", "--ip", "127.0.0.1", "--port", String(PORT), "--log-level", "error"], {
@@ -165,19 +169,19 @@ try {
   const adapter = browserContext.window.A2Cloudflare;
   adapter.configure(BASE);
   console.log("Starting browser adapter integration.");
-  const client1 = await adapter.createRoom();
+  const client1 = await withTimeout(adapter.createRoom(), "browser adapter room creation");
   const ready1 = new Promise(resolve => client1.on("match_started", resolve));
-  const client2 = await adapter.joinRoom(client1.code);
+  const client2 = await withTimeout(adapter.joinRoom(client1.code), "browser adapter room join");
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
-  const [clientMatch1, clientMatch2] = await Promise.all([ready1, ready2]);
+  const [clientMatch1, clientMatch2] = await withTimeout(Promise.all([ready1, ready2]), "browser adapter match start");
   console.log("Browser adapter synchronized both clients.");
   let specialRejected = false;
-  try { await client1.special(); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
+  try { await withTimeout(client1.special(), "browser adapter special response", 5000); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
   if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
   console.log("Browser adapter special-action validation passed.");
   const [moveFrom, moveTo] = firstLegalSwap(clientMatch1.board);
   const incomingAttack = new Promise(resolve => client2.on("incoming_attack", resolve));
-  const [clientMove, clientAttack] = await Promise.all([client1.move(moveFrom, moveTo), incomingAttack]);
+  const [clientMove, clientAttack] = await withTimeout(Promise.all([client1.move(moveFrom, moveTo), incomingAttack]), "browser adapter move and incoming attack");
   if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
   console.log("Browser adapter move and incoming attack passed.");
   client1.leave();
