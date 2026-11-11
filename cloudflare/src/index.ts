@@ -370,7 +370,8 @@ export class MatchRoom extends DurableObject<Env> {
     try {
       socket.send(JSON.stringify({
         type, player: playerId, board: own.board, hp: own.hp, opponentHp: rival.hp,
-        rage: own.rage, nextSeq: own.seq + 1, status: game.status, winner: game.winner ?? null
+        rage: own.rage, nextSeq: own.seq + 1, stunRemaining: Math.max(0, own.stunnedUntil - Date.now()),
+        status: game.status, winner: game.winner ?? null
       }));
     } catch { /* socket may have closed while snapshot was prepared */ }
   }
