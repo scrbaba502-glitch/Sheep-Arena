@@ -126,6 +126,10 @@
           };
           socket.onclose = event => {
             if (socket !== ws || intentionalClose) return;
+            if ((event.code === 4001 && event.reason === "session_replaced") || [1002, 1007, 1008, 1009].includes(event.code)) {
+              fire("closed", { code: event.code, reason: event.reason, fatal: true });
+              return;
+            }
             if (pendingMove) { pendingMove.reject(new Error("Connection interrupted; board will resynchronize.")); pendingMove = null; }
             if (pendingSpecial) { pendingSpecial.reject(new Error("Connection interrupted; match will resynchronize.")); pendingSpecial = null; }
             fire("reconnecting", { code: event.code, reason: event.reason, attempt: reconnectAttempts + 1 });
