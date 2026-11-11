@@ -212,8 +212,8 @@ try {
 
   const rematch1 = new Promise(resolve => client1.on("rematch_started", resolve));
   const rematch2 = new Promise(resolve => client2.on("rematch_started", resolve));
-  const restarted1Promise = new Promise(resolve => client1.on("match_started", resolve));
-  const restarted2Promise = new Promise(resolve => client2.on("match_started", resolve));
+  const restarted1Promise = new Promise(resolve => client1.on("round_start", resolve));
+  const restarted2Promise = new Promise(resolve => client2.on("round_start", resolve));
   const waiting1 = new Promise(resolve => client1.on("rematch_waiting", resolve));
   await client1.emit("rematch");
   await withTimeout(waiting1, "player one receiving rematch waiting acknowledgement", 5000);
