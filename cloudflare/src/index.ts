@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { createBoard, resolveMove, type Board } from "./game-engine";
 
 export interface Env {
   MATCH_ROOMS: DurableObjectNamespace<MatchRoom>;
@@ -105,7 +106,9 @@ export default {
 
 type PlayerId = "p1" | "p2";
 type PlayerAttachment = { playerId: PlayerId; lastMessageAt: number; messageWindowAt: number; messageCount: number };
-type PlayerPresence = { name?: string; hat?: string; hp?: number; ready?: boolean };
+type PlayerPresence = { name?: string; hat?: string; ready?: boolean };
+type ServerPlayerState = { board: Board; hp: number; rage: number; seq: number; lastMoveAt: number };
+type MatchState = { status: "active" | "finished"; players: Record<PlayerId, ServerPlayerState>; winner?: PlayerId; startedAt: number };
 
 const MAX_MESSAGE_BYTES = 2048;
 const MAX_MESSAGES_PER_SECOND = 12;
@@ -165,6 +168,8 @@ export class MatchRoom extends DurableObject<Env> {
       server.send(JSON.stringify({ type: "room_snapshot", presence }));
       await this.ctx.storage.put("lastActivity", Date.now());
       this.broadcast({ type: "peer_state", player: playerId, connected: true }, server);
+      if (this.ctx.getWebSockets().length === 2) await this.ensureMatch();
+      else await this.sendMatchState(server, playerId, "match_snapshot");
       return new Response(null, { status: 101, webSocket: client });
     }
 
@@ -207,7 +212,7 @@ export class MatchRoom extends DurableObject<Env> {
       const clean: PlayerPresence = {};
       if (typeof data?.name === "string") clean.name = data.name.slice(0, 14);
       if (typeof data?.hat === "string") clean.hat = data.hat.slice(0, 8);
-      if (Number.isInteger(data?.hp)) clean.hp = Math.max(0, Math.min(150, Number(data?.hp)));
+
       if (typeof data?.ready === "boolean") clean.ready = data.ready;
       const presence = (await this.ctx.storage.get<Record<PlayerId, PlayerPresence>>("presence")) ?? { p1: {}, p2: {} };
       presence[player] = { ...presence[player], ...clean };
@@ -223,14 +228,37 @@ export class MatchRoom extends DurableObject<Env> {
       return;
     }
 
-    if (message.type === "attack") {
+    if (message.type === "move") {
       const data = message.data as Record<string, unknown> | undefined;
-      const kind = data?.kind;
-      const damage = Number(data?.damage);
-      if (!["punch", "rifle", "slam"].includes(String(kind)) || !Number.isFinite(damage) || damage < 0 || damage > 130) return;
-      // Transport-stage validation only. Damage is still client-reported until the
-      // match-3 board and combat calculation are moved into authoritative server code.
-      this.broadcast({ type: "attack", player, data: { kind, damage: Math.round(damage) } }, socket);
+      const from = Number(data?.from), to = Number(data?.to), seq = Number(data?.seq);
+      if (!Number.isInteger(from) || !Number.isInteger(to) || !Number.isInteger(seq) || seq < 1) {
+        socket.send(JSON.stringify({ type: "move_rejected", reason: "invalid_move_payload" })); return;
+      }
+      const game = await this.ctx.storage.get<MatchState>("match");
+      if (!game || game.status !== "active") {
+        socket.send(JSON.stringify({ type: "move_rejected", reason: "match_not_active", seq })); return;
+      }
+      const own = game.players[player], rivalId: PlayerId = player === "p1" ? "p2" : "p1";
+      const rival = game.players[rivalId];
+      if (seq !== own.seq + 1) {
+        socket.send(JSON.stringify({ type: "move_rejected", reason: "sequence_mismatch", seq, expectedSeq: own.seq + 1 })); return;
+      }
+      const now = Date.now();
+      if (now - own.lastMoveAt < 120) {
+        socket.send(JSON.stringify({ type: "move_rejected", reason: "move_too_fast", seq, expectedSeq: own.seq + 1 })); return;
+      }
+      const result = resolveMove(own.board, from, to, 9, own.rage, crypto.getRandomValues(new Uint32Array(1))[0]);
+      if (!result.accepted) {
+        socket.send(JSON.stringify({ type: "move_rejected", reason: result.reason, seq, expectedSeq: own.seq + 1 })); return;
+      }
+      own.board = result.board; own.rage = result.rage; own.seq = seq; own.lastMoveAt = now;
+      const damage = result.attacks.reduce((sum, attack) => sum + attack.damage, 0);
+      rival.hp = Math.max(0, rival.hp - damage);
+      if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
+      await this.ctx.storage.put("match", game);
+      socket.send(JSON.stringify({ type: "move_result", seq, board: own.board, rage: own.rage, attacks: result.attacks, hp: own.hp, opponentHp: rival.hp, chains: result.chains, status: game.status }));
+      this.sendToPlayer(rivalId, { type: "incoming_attack", player, attacks: result.attacks, damage, hp: rival.hp, opponentHp: own.hp, status: game.status });
+      if (game.status === "finished") this.broadcast({ type: "match_over", winner: game.winner, hp: { p1: game.players.p1.hp, p2: game.players.p2.hp } });
       return;
     }
 
@@ -259,6 +287,53 @@ export class MatchRoom extends DurableObject<Env> {
     const lastActivity = (await this.ctx.storage.get<number>("lastActivity")) ?? 0;
     if (Date.now() - lastActivity >= ROOM_IDLE_MS) await this.ctx.storage.deleteAll();
     else await this.ctx.storage.setAlarm(lastActivity + ROOM_IDLE_MS);
+  }
+
+  private async ensureMatch(): Promise<void> {
+    const existing = await this.ctx.storage.get<MatchState>("match");
+    if (existing) {
+      for (const socket of this.ctx.getWebSockets()) {
+        const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
+        if (attachment) await this.sendMatchState(socket, attachment.playerId, "match_snapshot");
+      }
+      return;
+    }
+    const seeds = crypto.getRandomValues(new Uint32Array(2));
+    const match: MatchState = {
+      status: "active", startedAt: Date.now(),
+      players: {
+        p1: { board: createBoard(seeds[0]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0 },
+        p2: { board: createBoard(seeds[1]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0 }
+      }
+    };
+    await this.ctx.storage.put("match", match);
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
+      if (attachment) await this.sendMatchState(socket, attachment.playerId, "match_started");
+    }
+  }
+
+  private async sendMatchState(socket: WebSocket, playerId: PlayerId, type: string): Promise<void> {
+    const game = await this.ctx.storage.get<MatchState>("match");
+    if (!game) return;
+    const rivalId: PlayerId = playerId === "p1" ? "p2" : "p1";
+    const own = game.players[playerId], rival = game.players[rivalId];
+    try {
+      socket.send(JSON.stringify({
+        type, player: playerId, board: own.board, hp: own.hp, opponentHp: rival.hp,
+        rage: own.rage, nextSeq: own.seq + 1, status: game.status, winner: game.winner ?? null
+      }));
+    } catch { /* socket may have closed while snapshot was prepared */ }
+  }
+
+  private sendToPlayer(playerId: PlayerId, payload: unknown): void {
+    const encoded = JSON.stringify(payload);
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
+      if (attachment?.playerId === playerId) {
+        try { socket.send(encoded); } catch { /* closed socket */ }
+      }
+    }
   }
 
   private broadcast(payload: unknown, except?: WebSocket): void {
