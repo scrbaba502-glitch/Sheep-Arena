@@ -46,6 +46,15 @@ When a Worker is eventually deployed, configure the frontend with its HTTPS URL 
 
 Set `ALLOWED_ORIGIN` to the exact frontend origin or a comma-separated allowlist of exact origins (for example, production plus the Vercel branch preview). Avoid broad wildcard origins in production. Keep player tokens private and never put them in shareable invite URLs; share only the room code.
 
+## Deployment workflow
+
+A manual, confirmation-gated GitHub Actions workflow is provided at **Actions → Deploy Cloudflare multiplayer backend**. Before using it, add these repository Actions secrets:
+
+- `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with Workers Scripts:Edit and Account Settings:Read for the target account
+- `CLOUDFLARE_ACCOUNT_ID` — the target Cloudflare account ID
+
+The workflow runs the audit, type checks, unit tests, local Worker integration smoke test, frontend syntax check, and Wrangler dry-run before deployment. It only deploys when the manual input is explicitly set to `YES`.
+
 ## Deployment status
 
-Not deployed. No Cloudflare account, zone, secrets, or production Worker has been configured by this repository change. The Vercel production frontend and the default GitHub branch remain untouched.
+Not deployed. No Cloudflare account credentials or production Worker have been configured by this repository change. The Vercel production frontend and the default GitHub branch remain untouched.
