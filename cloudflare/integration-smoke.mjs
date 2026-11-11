@@ -124,6 +124,10 @@ try {
   const invalid = await p1.next(m => m.type === "move_rejected");
   if (invalid.reason !== "not_adjacent") throw new Error("Illegal swap was not rejected");
 
+  p1.send({ type: "special" });
+  const special = await p1.next(m => m.type === "special_rejected");
+  if (special.reason !== "rage_not_ready") throw new Error("Server did not validate rage ability readiness");
+
   const [from, to] = firstLegalSwap(start1.board);
   p1.send({ type: "move", data: { from, to, seq: 1 } });
   const [move, incoming] = await Promise.all([
@@ -132,10 +136,6 @@ try {
   ]);
   if (!move.board || move.board.length !== 49 || !move.attacks.length) throw new Error("Accepted move returned incomplete authoritative state");
   if (incoming.damage <= 0 || incoming.hp >= 150) throw new Error("Server did not apply authoritative attack damage");
-
-  p1.send({ type: "special" });
-  const special = await p1.next(m => m.type === "special_rejected");
-  if (special.reason !== "rage_not_ready") throw new Error("Server did not validate rage ability readiness");
 
   p2.send({ type: "attack", data: { k: "slam", d: 9999 } });
   const disconnected = p2.next(m => m.type === "peer_state" && m.player === "p1" && !m.connected);
