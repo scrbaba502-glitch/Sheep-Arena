@@ -197,7 +197,7 @@ function modeMenu(){
   const card=(title,desc,fn)=>{const b=document.createElement("button");b.className="mode-card";b.innerHTML="<strong>"+title+"</strong><span>"+desc+"</span>";b.onclick=()=>{au();o.className="h";fn()};grid.appendChild(b)};
   card("⚔ CLASSIC · 1v1","Challenge another player online in a private real-time duel.",()=>cloudDuelMenu());
   card("🛡 CLASSIC · VS COMPUTER","Fight AI rivals, earn coins, unlock outfits and improve your champion.",()=>{gameMode="classic";setup()});
-  card("📖 STORY MODE","Five cinematic chapters. Four elemental trials. One final enemy.",()=>storyIntro(0));
+  card("📖 STORY MODE","Five cinematic chapters. Four elemental trials. One final enemy.",()=>storyIntro(Math.min(4,Math.max(0,Number(ls("a2story",0))||0))));
   o.insertBefore(grid,main);
  });
 }
