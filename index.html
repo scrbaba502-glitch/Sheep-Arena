@@ -328,7 +328,7 @@ function peerSync(ps){
  const pr=op.presence;
  if(typeof pr.n=="string")E.name="⚔️ "+pr.n.slice(0,14);
  if(typeof pr.ht=="string")E.hat=pr.ht;
- if(over&&rdMe&&pr.rd==1){rdMe=0;room.presence({rd:0});startDuel(op)}
+ // Rematches are coordinated by the Durable Object; wait for match_started.
 }
 function duelEnd(){over=true;busy=true;ui();const w=E.hp<=0&&P.hp>0;sv(w?"a2w":"a2l",ls(w?"a2w":"a2l",0)+1);if(w){snd("clap");cheer=4}
  setTimeout(()=>ov("<h1>"+(w?"VICTORY!":"DEFEATED")+"</h1>","ROOM "+rcode.toUpperCase()+" · "+rec(),w?"You beat "+E.name+"!":E.name+" takes this round.","REMATCH",rematch,o=>o.appendChild(mkb("LEAVE ROOM",()=>{$("ov").className="h";leaveRoom()}))),w?2200:1500)}
