@@ -212,10 +212,14 @@ try {
 
   const rematch1 = new Promise(resolve => client1.on("rematch_started", resolve));
   const rematch2 = new Promise(resolve => client2.on("rematch_started", resolve));
-  await Promise.all([client1.presence({ rd: 1 }), client2.presence({ rd: 1 })]);
-  await withTimeout(Promise.all([rematch1, rematch2]), "both clients accepting the rematch", 12000);
-  const restarted1 = await withTimeout(new Promise(resolve => client1.on("match_started", resolve)), "player one receiving the new match");
-  const restarted2 = await withTimeout(new Promise(resolve => client2.on("match_started", resolve)), "player two receiving the new match");
+  const restarted1Promise = new Promise(resolve => client1.on("match_started", resolve));
+  const restarted2Promise = new Promise(resolve => client2.on("match_started", resolve));
+  const waiting1 = new Promise(resolve => client1.on("rematch_waiting", resolve));
+  await client1.emit("rematch");
+  await withTimeout(waiting1, "player one receiving rematch waiting acknowledgement", 5000);
+  await client2.emit("rematch");
+  await withTimeout(Promise.all([rematch1, rematch2]), "both clients receiving rematch_started", 12000);
+  const [restarted1, restarted2] = await withTimeout(Promise.all([restarted1Promise, restarted2Promise]), "both clients receiving the new match", 12000);
   if (restarted1.hp !== 150 || restarted2.hp !== 150 || restarted1.board.length !== 49 || restarted2.board.length !== 49) {
     throw new Error("Rematch did not reset both clients to fresh authoritative match state");
   }
