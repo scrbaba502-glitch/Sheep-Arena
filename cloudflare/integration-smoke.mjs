@@ -120,25 +120,32 @@ try {
     p1.next(m => m.type === "match_started"),
     p2.next(m => m.type === "match_started")
   ]);
-  if (start1.board.length !== 49 || start2.board.length !== 49) throw new Error("Match start did not provide both boards");
-  console.log("Raw WebSocket two-player match started.");
+  if (start1.board.length !== 49 || start2.board.length !== 49 || !["p1","p2"].includes(start1.turn) || start1.turn !== start2.turn) throw new Error("Match start did not synchronize both boards and the first turn");
+  console.log("Raw WebSocket two-player match started with a synchronized first turn.");
 
-  p1.send({ type: "move", data: { from: 0, to: 8, seq: 1 } });
-  const invalid = await p1.next(m => m.type === "move_rejected");
+  const firstSocket = start1.turn === "p1" ? p1 : p2;
+  const secondSocket = start1.turn === "p1" ? p2 : p1;
+  const firstState = start1.turn === "p1" ? start1 : start2;
+  firstSocket.send({ type: "move", data: { from: 0, to: 8, seq: 1 } });
+  const invalid = await firstSocket.next(m => m.type === "move_rejected");
   if (invalid.reason !== "not_adjacent") throw new Error("Illegal swap was not rejected");
 
-  p1.send({ type: "special" });
-  const special = await p1.next(m => m.type === "special_rejected");
+  firstSocket.send({ type: "special" });
+  const special = await firstSocket.next(m => m.type === "special_rejected");
   if (special.reason !== "rage_not_ready") throw new Error("Server did not validate rage ability readiness");
 
-  const [from, to] = firstLegalSwap(start1.board);
-  p1.send({ type: "move", data: { from, to, seq: 1 } });
+  const [from, to] = firstLegalSwap(firstState.board);
+  firstSocket.send({ type: "move", data: { from, to, seq: 1 } });
   const [move, incoming] = await Promise.all([
-    p1.next(m => m.type === "move_result"),
-    p2.next(m => m.type === "incoming_attack")
+    firstSocket.next(m => m.type === "move_result"),
+    secondSocket.next(m => m.type === "incoming_attack")
   ]);
-  if (!move.board || move.board.length !== 49 || !move.attacks.length) throw new Error("Accepted move returned incomplete authoritative state");
-  if (incoming.damage <= 0 || incoming.hp >= 150) throw new Error("Server did not apply authoritative attack damage");
+  if (!move.board || move.board.length !== 49 || !move.attacks.length || move.turn !== (start1.turn === "p1" ? "p2" : "p1")) throw new Error("Accepted move did not advance the authoritative turn");
+  if (incoming.damage <= 0 || incoming.hp >= 150 || incoming.turn !== move.turn) throw new Error("Server did not apply attack damage and synchronize the next turn");
+  const [nextFrom,nextTo] = firstLegalSwap((start1.turn === "p1" ? start2 : start1).board);
+  secondSocket.send({type:"move",data:{from:nextFrom,to:nextTo,seq:1}});
+  const secondMove = await secondSocket.next(m=>m.type==="move_result");
+  if(secondMove.turn!==start1.turn) throw new Error("Second valid move did not return the turn to the first player");
 
   p2.send({ type: "attack", data: { k: "slam", d: 9999 } });
   const disconnected = p2.next(m => m.type === "peer_state" && m.player === "p1" && !m.connected);
@@ -153,7 +160,7 @@ try {
   ]);
   const snapshot = await resumed.next(m => m.type === "match_snapshot");
   const reconnected = await p2.next(m => m.type === "peer_state" && m.player === "p1" && m.connected);
-  if (!reconnected.connected || snapshot.hp !== 150 || snapshot.board.length !== 49) throw new Error("Reconnect did not restore authoritative state");
+  if (!reconnected.connected || snapshot.board.length !== 49 || !["p1","p2"].includes(snapshot.turn)) throw new Error("Reconnect did not restore authoritative state and turn");
   console.log("Raw WebSocket reconnect and snapshot checks passed.");
 
   resumed.close();
@@ -185,24 +192,30 @@ try {
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
   const [clientMatch1, clientMatch2] = await withTimeout(Promise.all([ready1, ready2]), "browser adapter match start");
   console.log("Browser adapter synchronized both clients.");
+  const firstRoom = clientMatch1.turn === client1.player ? client1 : client2;
+  const secondRoom = firstRoom === client1 ? client2 : client1;
+  const firstMatch = firstRoom === client1 ? clientMatch1 : clientMatch2;
   let specialRejected = false;
-  try { await withTimeout(client1.special(), "browser adapter special response", 5000); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
-  if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
-  console.log("Browser adapter special-action validation passed.");
-  const [moveFrom, moveTo] = firstLegalSwap(clientMatch1.board);
-  const incomingAttack = new Promise(resolve => client2.on("incoming_attack", resolve));
-  const [clientMove, clientAttack] = await withTimeout(Promise.all([client1.move(moveFrom, moveTo), incomingAttack]), "browser adapter move and incoming attack");
-  if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
-  console.log("Browser adapter move and incoming attack passed.");
+  try { await withTimeout(secondRoom.special(), "out-of-turn special response", 5000); } catch (error) { specialRejected = error.reason === "not_your_turn"; }
+  if (!specialRejected) throw new Error("Server did not reject a special action from the inactive player");
+  console.log("Browser adapter out-of-turn special-action validation passed.");
+  const [moveFrom, moveTo] = firstLegalSwap(firstMatch.board);
+  const incomingAttack = new Promise(resolve => secondRoom.on("incoming_attack", resolve));
+  const [clientMove, clientAttack] = await withTimeout(Promise.all([firstRoom.move(moveFrom, moveTo), incomingAttack]), "browser adapter move and incoming attack");
+  if (clientMove.board.length !== 49 || clientAttack.damage <= 0 || clientMove.turn !== secondRoom.player) throw new Error("Browser adapter did not complete and advance an authoritative turn");
+  console.log("Browser adapter move, incoming attack, and turn handoff passed.");
 
   const ended1 = new Promise(resolve => client1.on("match_over", resolve));
   const ended2 = new Promise(resolve => client2.on("match_over", resolve));
-  let board = clientMove.board, finished = false;
+  const boards = { [firstRoom.player]: clientMove.board, [secondRoom.player]: clientMatch1.turn === secondRoom.player ? clientMatch1.board : clientMatch2.board };
+  let nextTurn = clientMove.turn, finished = false;
   for (let attempt = 0; attempt < 40 && !finished; attempt++) {
     await delay(130);
-    const [from, to] = firstLegalSwap(board);
-    const result = await withTimeout(client1.move(from, to), "finishing the match", 12000);
-    board = result.board;
+    const activeRoom = nextTurn === client1.player ? client1 : client2;
+    const [from, to] = firstLegalSwap(boards[nextTurn]);
+    const result = await withTimeout(activeRoom.move(from, to), "finishing the match", 12000);
+    boards[nextTurn] = result.board;
+    nextTurn = result.turn;
     finished = result.status === "finished";
   }
   if (!finished) throw new Error("Test player could not finish the match within 40 legal moves");
