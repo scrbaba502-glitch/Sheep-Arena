@@ -344,7 +344,7 @@ export class MatchRoom extends DurableObject<Env> {
       status: "active", startedAt: Date.now(),
       players: {
         p1: { board: createBoard(seeds[0]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0, stunnedUntil: 0 },
-        p2: { board: createBoard(seeds[1]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0 }
+        p2: { board: createBoard(seeds[1]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0, stunnedUntil: 0 }
       }
     };
     await this.ctx.storage.put("match", match);
