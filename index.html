@@ -107,7 +107,7 @@ const HAT=["","🕶️","🤠","🎩","🎧","👑","🦸","🔥"],ENM=["Baa-rba
 const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let L=ls("a2lvl",1),coins=ls("a2c",0),ST=ls("a2s",{}),hatSel=ls("a2h",-1),mute=ls("a2m",0);
 const TR=[{hp:1,iv:1,t:"BRAWLER"},{hp:1.5,iv:1.1,t:"TANK"},{hp:.9,iv:.7,t:"SPEEDSTER"},{hp:1,iv:1,r:.7,t:"SNIPER"}];
-let stop=0,flash=0,room=null,NET=false,Lsave=0,opp=null,rdMe=0,hpPub=-1,rcode="",myName=ls("a2n","Sheep"+(10+Math.random()*89|0)),hint=null,hintT=0,pst=0,P={hp:100,mx:100,hat:""},E={hp:100,mx:100,name:"",hat:"👑",r:0,dm:1},G=[],busy=true,over=true,A=null,Q=Promise.resolve(),pend=0,rage=0,cheer=0,eNext=0,eInt=5000,T=0,ps=[],tx=[],shake=0,sel=null,down=null,lavaKO=false,rivalTimeout=null;
+let stop=0,flash=0,room=null,activeTurn=null,NET=false,Lsave=0,opp=null,rdMe=0,hpPub=-1,rcode="",myName=ls("a2n","Sheep"+(10+Math.random()*89|0)),hint=null,hintT=0,pst=0,P={hp:100,mx:100,hat:""},E={hp:100,mx:100,name:"",hat:"👑",r:0,dm:1},G=[],busy=true,over=true,A=null,Q=Promise.resolve(),pend=0,rage=0,cheer=0,eNext=0,eInt=5000,T=0,ps=[],tx=[],shake=0,sel=null,down=null,lavaKO=false,rivalTimeout=null;
 /* ---------- sound ---------- */
 let ac;function au(){if(!ac)try{ac=new AudioContext()}catch(e){}if(ac&&ac.state=="suspended")ac.resume();return ac}
 function snd(k){if(mute)return;const a=au();if(!a)return;const t=a.currentTime;
@@ -131,13 +131,13 @@ function reroll(){do{G.forEach((o,i)=>{o.t=rnd();o.el.style.setProperty("--c",CO
 function gravity(){for(let c=0;c<N;c++){let w=N-1;for(let r=N-1;r>=0;r--){const o=G[r*N+c];if(o){if(w!=r){G[w*N+c]=o;G[r*N+c]=null;pl(o,w,c)}w--}}for(let r=w,k=0;r>=0;r--,k++)G[r*N+c]=mk(rnd(),r,c,-1-k)}}
 function sw(a,b){[G[a],G[b]]=[G[b],G[a]];pl(G[a],a/N|0,a%N);pl(G[b],b/N|0,b%N)}
 async function swap(a,b){
- if(busy||over||pst>0)return;
+ if(busy||over||pst>0||!canTakeTurn())return;
  if(NET&&room&&typeof room.move==="function"){
   clearHint();busy=true;
   try{
    const result=await room.move(a,b);
    if(!NET)return;
-   cloudBoard(result.board);const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
+   cloudBoard(result.board);const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;if(result.turn==="p1"||result.turn==="p2")activeTurn=result.turn;ui();
    for(const hit of (result.attacks||[]))await act(hit.kind,"p",0);
    busy=over;
   }catch(error){snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())}
@@ -152,7 +152,7 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
 /* ---------- fight logic ---------- */
 function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
-function ui(){if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
+function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
 function act(k,who,dmg){if(NET&&who==="p"&&room&&typeof room.move!=="function"&&!over)room.emit("atk",{k,d:dmg}).catch(()=>{});pend++;Q=Q.then(()=>new Promise(res=>{if(over){res();return}A={k,who,dmg,t:0,d:{punch:700,rifle:1000,slam:2800}[k],imp:{punch:.45,rifle:.62,slam:.78}[k],hit:0,ko:0,res}})).then(()=>{pend--});return Q}
 function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!(NET&&room&&typeof room.move==="function"))tg.hp=Math.max(0,tg.hp-A.dmg);A.hit=1;stop=k=="slam"?.18:.07;flash=k=="slam"?.8:.3;shake=k=="slam"?20:k=="rifle"?6:10;cheer=1.3;snd(k=="slam"?"boom":k=="rifle"?"shot":"punch");
  tx.push({s:k=="punch"?"POW!":k=="rifle"?"BANG!":"SLAM!!",x,y:H*.38,l:1,c:k=="slam"?"#ff7a1a":"#fff"});
@@ -162,10 +162,10 @@ function enemyAct(){const r=Math.random(),d=(5+L*1.6)*E.dm,k=L>=4&&r<.12?"slam":
 $("slam").onclick=()=>{
  au();
  if(NET&&room&&typeof room.special==="function"){
-  if(rage<100||busy||over)return;
+  if(rage<100||busy||over||!canTakeTurn())return;
   busy=true;
   room.special().then(result=>{
-   const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
+   const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;if(result.turn==="p1"||result.turn==="p2")activeTurn=result.turn;ui();
    return act("slam","p",0);
   }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())});
   return;
@@ -202,13 +202,16 @@ function setupCloudRoom(r){
  room.on("opponent_wants_rematch",()=>{
   if(over){const p=$("ov").querySelector("p");if(p)p.textContent="Your rival wants a rematch! Tap REMATCH to accept."}
  });
+ room.on("turn_update",m=>{if(m&&["p1","p2"].includes(m.turn)){activeTurn=m.turn;ui()}});
  room.on("incoming_attack",m=>{
   if(!NET||over)return;
+  if(m.turn==="p1"||m.turn==="p2")activeTurn=m.turn;
   P.hp=Math.max(0,Math.min(P.mx,Number(m.hp)||0));
   E.hp=Math.max(0,Math.min(E.mx,Number(m.opponentHp)||0));
   if(Number(m.stunMs)>0)pst=Math.max(pst,Number(m.stunMs));
   ui();
-  (async()=>{for(const hit of (m.attacks||[]))await act(hit.kind,"e",0)})();
+  busy=true;
+  (async()=>{for(const hit of (m.attacks||[]))await act(hit.kind,"e",0);busy=over})();
  });
  room.on("emoji",m=>{const i=Number(m.data&&m.data.index);if(Number.isInteger(i)&&i>=0&&i<4)tx.push({s:EMO[i],x:W*.69,y:H*.3,l:1.4,c:"#fff"})});
  room.on("match_over",m=>{
@@ -225,6 +228,7 @@ function setupCloudRoom(r){
  });
  room.presence({n:myName,ht:HAT[hatSel>=0?hatSel:Math.min(L-1,7)],v:1,rd:0}).catch(()=>{});
 }
+function canTakeTurn(){return !NET||!!(room&&activeTurn===room.player)}
 function cloudBoard(tiles){
  if(!Array.isArray(tiles)||tiles.length!==N*N)return;
  $("board").innerHTML="";G=tiles.map((t,i)=>mk(Math.max(0,Math.min(4,Number(t)||0)),i/N|0,i%N));
@@ -238,7 +242,7 @@ function applyMatchState(m){
  E.stun=0;pst=0;rdMe=0;sel=null;down=null;hint=null;hintT=0;eNext=1e12;
  ps=[];tx=[];
  cloudBoard(m.board);const ownHp=Number(m.hp),rivalHp=Number(m.opponentHp);P.hp=P.mx=Number.isFinite(ownHp)?Math.max(0,ownHp):150;E.hp=E.mx=Number.isFinite(rivalHp)?Math.max(0,rivalHp):150;
- rage=Number(m.rage)||0;pst=Math.max(0,Number(m.stunRemaining)||0);busy=false;over=false;hpPub=-1;$("ov").className="h";ui();
+ rage=Number(m.rage)||0;activeTurn=m.turn||null;pst=Math.max(0,Number(m.stunRemaining)||0);busy=false;over=false;hpPub=-1;$("ov").className="h";ui();
  if(rivalTimeout){clearTimeout(rivalTimeout);rivalTimeout=null}
  if(m.status==="finished")duelEnd();
 }
@@ -345,12 +349,12 @@ function peerSync(ps){
 function duelEnd(){over=true;busy=true;ui();const w=E.hp<=0&&P.hp>0;sv(w?"a2w":"a2l",ls(w?"a2w":"a2l",0)+1);if(w){snd("clap");cheer=4}
  setTimeout(()=>ov("<h1>"+(w?"VICTORY!":"DEFEATED")+"</h1>","ROOM "+rcode.toUpperCase()+" · "+rec(),w?"You beat "+E.name+"!":E.name+" takes this round.","REMATCH",rematch,o=>o.appendChild(mkb("LEAVE ROOM",()=>{$("ov").className="h";leaveRoom()}))),w?2200:1500)}
 function rematch(){if(!room||!over||(!opp&&typeof room.move!=="function"))return;rdMe=1;ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom);room.emit("rematch").catch(error=>{if(!room||!over)return;rdMe=0;ov("<h1>REMATCH ERROR</h1>","NETWORK ISSUE","Could not send the rematch request. Check the connection and try again.","TRY AGAIN",rematch)})}
-function leaveRoom(){if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b1").style.display="";$("b2").style.display="";$("b3").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
+function leaveRoom(){activeTurn=null;if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b1").style.display="";$("b2").style.display="";$("b3").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
 /* ---------- input ---------- */
 const bd=$("board"),adj=(a,b)=>Math.abs((a/N|0)-(b/N|0))+Math.abs(a%N-b%N)==1;
 function idx(e){const r=bd.getBoundingClientRect(),c=(e.clientX-r.left)/r.width*N|0,w=(e.clientY-r.top)/r.height*N|0;return c<0||c>=N||w<0||w>=N?-1:w*N+c}
 function unsel(){if(sel!=null&&G[sel])G[sel].el.classList.remove("s");sel=null}
-bd.onpointerdown=e=>{au();clearHint();if(busy||over||pst>0)return;down={i:idx(e),x:e.clientX,y:e.clientY}};
+bd.onpointerdown=e=>{au();clearHint();if(busy||over||pst>0||!canTakeTurn())return;down={i:idx(e),x:e.clientX,y:e.clientY}};
 bd.onpointermove=e=>{if(!down||busy)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.max(Math.abs(dx),Math.abs(dy))>16){const i=down.i,j=Math.abs(dx)>Math.abs(dy)?i+Math.sign(dx):i+Math.sign(dy)*N;down=null;unsel();if(i>=0&&j>=0&&j<N*N&&adj(i,j))swap(i,j)}};
 bd.onpointerup=()=>{if(!down)return;const i=down.i;down=null;if(i<0||busy)return;if(sel!=null&&sel!==i&&adj(sel,i)){const s=sel;unsel();swap(s,i)}else{unsel();sel=i;G[i].el.classList.add("s")}};
 /* ---------- ring ---------- */
