@@ -1,0 +1,19 @@
+name = "a2-sheep-arena-realtime"
+main = "src/index.ts"
+compatibility_date = "2026-11-11"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MATCH_ROOMS"
+class_name = "MatchRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MatchRoom"]
+
+[vars]
+# Set this to the exact deployed game origin before production.
+ALLOWED_ORIGIN = "https://sheeparena.vercel.app"
