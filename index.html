@@ -208,6 +208,7 @@ function setupCloudRoom(r){
   if(m.hp){P.hp=room.player==="p1"?m.hp.p1:m.hp.p2;E.hp=room.player==="p1"?m.hp.p2:m.hp.p1;ui()}
   if(!A&&!pend&&!over)finish();
  });
+ room.on("rematch_rejected",()=>{if(!over)return;rdMe=0;ov("<h1>REMATCH NOT READY</h1>","SERVER CHECK","The server has not finished the previous round yet. Wait a moment and try again.","TRY AGAIN",rematch)});
  room.on("reconnecting",()=>{
   if(NET&&!over){busy=true;ov("<h1>RECONNECTING…</h1>","NETWORK INTERRUPTION","Restoring your match automatically. Your board and HP are saved on the server.","LEAVE ROOM",leaveRoom)}
  });
