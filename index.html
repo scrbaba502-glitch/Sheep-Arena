@@ -158,7 +158,19 @@ function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!NET
  for(let i=0;i<(k=="slam"?50:16);i++)ps.push({x,y:fy-30*s,vx:(Math.random()-.5)*(k=="slam"?600:300),vy:-Math.random()*(k=="slam"?500:250),l:.8,m:.8,c:k=="slam"?"255,120,20":"255,230,150",r:3+Math.random()*3});
  if(tg.hp<=0){A.ko=1;if(k=="slam")lavaKO=true}else if(k=="slam"){if(tg===E){E.stun=2600;eNext=T+eInt*2}else pst=2600;tx.push({s:"STUNNED! 💫",x,y:H*.52,l:1.6,c:"#9ee7ff"})}try{navigator.vibrate&&navigator.vibrate(k=="slam"?[60,40,120]:25)}catch(e){}ui()}
 function enemyAct(){const r=Math.random(),d=(5+L*1.6)*E.dm,k=L>=4&&r<.12?"slam":L>=2&&r<.4+E.r*.3?"rifle":"punch";act(k,"e",Math.round(d*{punch:1,rifle:1.7,slam:3.2}[k]))}
-$("slam").onclick=()=>{au();if(rage>=100&&L>=3&&!over){rage=0;ui();act("slam","p",46)}};
+$("slam").onclick=()=>{
+ au();
+ if(NET&&room){
+  if(rage<100||busy||over)return;
+  busy=true;
+  room.special().then(result=>{
+   P.hp=Number(result.hp)||P.hp;E.hp=Number(result.opponentHp)||E.hp;rage=Number(result.rage)||0;ui();
+   return act("slam","p",0);
+  }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=false});
+  return;
+ }
+ if(rage>=100&&L>=3&&!over){rage=0;ui();act("slam","p",46)}
+};
 function ov(h,sub,txt,btn,fn,ex){const o=$("ov");o.className="";o.innerHTML=h+(sub?`<small>${sub}</small>`:"")+`<p>${txt}</p><button class="btn" data-m>${btn}</button>`;ex&&ex(o);o.querySelector("[data-m]").onclick=()=>{au();o.className="h";fn()}}
 function wardrobe(o){const d=document.createElement("div");d.className="chips";const mh=Math.min(L-1,7);for(let i=0;i<=mh;i++){const b=document.createElement("button");b.className="chip"+((hatSel<0?mh:hatSel)==i?" on":"");b.textContent=HAT[i]||"🐑";b.onclick=()=>{hatSel=i;sv("a2h",i);[...d.children].forEach((c,j)=>c.className="chip"+(j==i?" on":""))};d.appendChild(b)}o.insertBefore(d,o.querySelector("button"))}
 function finish(){if(NET){duelEnd();return}over=true;busy=true;ui();const w=E.hp<=0;
@@ -186,6 +198,7 @@ function setupCloudRoom(r){
   if(!NET||over)return;
   P.hp=Math.max(0,Math.min(P.mx,Number(m.hp)||0));
   E.hp=Math.max(0,Math.min(E.mx,Number(m.opponentHp)||0));
+  if(Number(m.stunMs)>0)pst=Math.max(pst,Number(m.stunMs));
   ui();
   (async()=>{for(const hit of (m.attacks||[]))await act(hit.kind,"e",0)})();
  });
@@ -278,7 +291,7 @@ function lobby(code){const C=code.toUpperCase();
    try{if(navigator.share){await navigator.share({title:"A² Sheep Arena",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
    try{await navigator.clipboard.writeText(u);el.textContent="✓ LINK COPIED"}catch(x){el.textContent="CODE · "+C}},"btn");
   o.insertBefore(inv,bt);bt.className="btn ghost"})}
-function startDuel(op){opp=op;NET=true;if(!Lsave)Lsave=L;L=9;$("ov").className="h";setup();P.hp=P.mx=150;E.hp=E.mx=150;E.name="⚔️ "+String(op.presence.n||"Rival").slice(0,14);E.hat=op.presence.ht||"";eNext=1e12;$("b2").style.display="none";$("emo").style.display="flex";$("tmw").style.visibility="hidden";hpPub=150;room.presence({hp:150,ht:P.hat,rd:0});$("hint").textContent="DUEL · Match stones to hit your rival. Chokeslam stuns them!";ui()}
+function startDuel(op){opp=op;NET=true;if(!Lsave)Lsave=L;L=9;$("ov").className="h";setup();P.hp=P.mx=150;E.hp=E.mx=150;E.name="⚔️ "+String(op.presence.n||"Rival").slice(0,14);E.hat=op.presence.ht||"";eNext=1e12;$("b1").style.display="none";$("b2").style.display="none";$("b3").style.display="none";$("emo").style.display="flex";$("tmw").style.visibility="hidden";hpPub=150;room.presence({hp:150,ht:P.hat,rd:0});$("hint").textContent="DUEL · Match stones to hit your rival. Chokeslam stuns them!";ui()}
 function peerSync(ps){if(!room)return;const o=ps.filter(p=>!p.isMe);
  if(!NET){const op=o.find(p=>p.presence&&p.presence.v==1);if(op&&o.length<=1)startDuel(op);return}
  if(!opp)return;const op=o.find(p=>p.peer===opp.peer);
@@ -289,7 +302,7 @@ function peerSync(ps){if(!room)return;const o=ps.filter(p=>!p.isMe);
 function duelEnd(){over=true;busy=true;ui();const w=E.hp<=0&&P.hp>0;sv(w?"a2w":"a2l",ls(w?"a2w":"a2l",0)+1);if(w){snd("clap");cheer=4}
  setTimeout(()=>ov("<h1>"+(w?"VICTORY!":"DEFEATED")+"</h1>","ROOM "+rcode.toUpperCase()+" · "+rec(),w?"You beat "+E.name+"!":E.name+" takes this round.","REMATCH",rematch,o=>o.appendChild(mkb("LEAVE ROOM",()=>{$("ov").className="h";leaveRoom()}))),w?2200:1500)}
 function rematch(){if(!room||!opp)return;rdMe=1;room.presence({rd:1});const op=room.peers().find(p=>p.peer===opp.peer);if(op&&op.presence.rd==1){rdMe=0;room.presence({rd:0});startDuel(op)}else ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom)}
-function leaveRoom(){if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b2").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
+function leaveRoom(){if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b1").style.display="";$("b2").style.display="";$("b3").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
 /* ---------- input ---------- */
 const bd=$("board"),adj=(a,b)=>Math.abs((a/N|0)-(b/N|0))+Math.abs(a%N-b%N)==1;
 function idx(e){const r=bd.getBoundingClientRect(),c=(e.clientX-r.left)/r.width*N|0,w=(e.clientY-r.top)/r.height*N|0;return c<0||c>=N||w<0||w>=N?-1:w*N+c}
