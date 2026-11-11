@@ -36,8 +36,10 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const requestOrigin = request.headers.get("Origin");
-    const allowedOrigin = env.ALLOWED_ORIGIN || "*";
-    const corsOrigin = allowedOrigin === "*" || requestOrigin === allowedOrigin ? allowedOrigin : "null";
+    const allowedOrigins = (env.ALLOWED_ORIGIN || "*").split(",").map((value) => value.trim()).filter(Boolean);
+    const wildcardOrigin = allowedOrigins.includes("*");
+    const originAllowed = !requestOrigin || wildcardOrigin || allowedOrigins.includes(requestOrigin);
+    const corsOrigin = wildcardOrigin ? "*" : requestOrigin && originAllowed ? requestOrigin : allowedOrigins[0] || "null";
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -52,7 +54,7 @@ export default {
       });
     }
 
-    if (requestOrigin && corsOrigin === "null") {
+    if (requestOrigin && !originAllowed) {
       return json({ error: "origin_not_allowed" }, 403, "null");
     }
 
