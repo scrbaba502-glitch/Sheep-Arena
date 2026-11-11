@@ -117,11 +117,23 @@ const MAX_MESSAGES_PER_SECOND = 12;
 const ROOM_IDLE_MS = 2 * 60 * 1000;
 
 export class MatchRoom extends DurableObject<Env> {
+  private eventQueue: Promise<void> = Promise.resolve();
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
   }
 
-  async fetch(request: Request): Promise<Response> {
+  private serialize<T>(operation: () => Promise<T>): Promise<T> {
+    const task = this.eventQueue.then(operation, operation);
+    this.eventQueue = task.then(() => undefined, () => undefined);
+    return task;
+  }
+
+  fetch(request: Request): Promise<Response> {
+    return this.serialize(() => this.handleFetch(request));
+  }
+
+  private async handleFetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
 
     if (path === "/create" && request.method === "POST") {
@@ -180,7 +192,11 @@ export class MatchRoom extends DurableObject<Env> {
     return new Response("Not found", { status: 404 });
   }
 
-  async webSocketMessage(socket: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+  webSocketMessage(socket: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    return this.serialize(() => this.handleWebSocketMessage(socket, raw));
+  }
+
+  private async handleWebSocketMessage(socket: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
     if (!attachment) return this.close(socket, 1008, "invalid_session");
 
@@ -314,7 +330,11 @@ export class MatchRoom extends DurableObject<Env> {
     }
   }
 
-  async webSocketClose(socket: WebSocket, code: number, reason: string): Promise<void> {
+  webSocketClose(socket: WebSocket, code: number, reason: string): Promise<void> {
+    return this.serialize(() => this.handleWebSocketClose(socket, code, reason));
+  }
+
+  private async handleWebSocketClose(socket: WebSocket, code: number, reason: string): Promise<void> {
     const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
     if (attachment) {
       const replacementActive = this.ctx.getWebSockets().some((active) => {
@@ -331,7 +351,11 @@ export class MatchRoom extends DurableObject<Env> {
     await this.webSocketClose(socket, 1011, "socket_error");
   }
 
-  async alarm(): Promise<void> {
+  alarm(): Promise<void> {
+    return this.serialize(() => this.handleAlarm());
+  }
+
+  private async handleAlarm(): Promise<void> {
     const sockets = this.ctx.getWebSockets();
     if (sockets.length > 0) {
       await this.ctx.storage.deleteAlarm();
