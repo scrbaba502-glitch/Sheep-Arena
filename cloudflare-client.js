@@ -19,7 +19,7 @@
     configured() { return !!baseUrl(); },
     configure(url) {
       const value = String(url || "").trim().replace(/\/+$/, "");
-      if (!/^https:\/\//i.test(value)) throw new Error("Use the HTTPS URL of your Cloudflare Worker.");
+      if (!/^https:\/\//i.test(value) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(value)) throw new Error("Use an HTTPS Worker URL (HTTP is allowed only for localhost testing).");
       localStorage.setItem(STORAGE_KEY, value);
       return value;
     },
@@ -46,7 +46,7 @@
     },
     connect(base, session) {
       return new Promise((resolve, reject) => {
-        const wsUrl = base.replace(/^https:/i, "wss:") + "/api/rooms/" + encodeURIComponent(session.code) + "/ws?token=" + encodeURIComponent(session.playerToken);
+        const wsUrl = base.replace(/^https:/i, "wss:").replace(/^http:/i, "ws:") + "/api/rooms/" + encodeURIComponent(session.code) + "/ws?token=" + encodeURIComponent(session.playerToken);
         const events = Object.create(null), peerListeners = [];
         const me = { peer: "me", isMe: true, presence: {} };
         let ws = null, rival = null, seq = 1, pendingMove = null, pendingSpecial = null;
