@@ -332,7 +332,7 @@ function peerSync(ps){
 }
 function duelEnd(){over=true;busy=true;ui();const w=E.hp<=0&&P.hp>0;sv(w?"a2w":"a2l",ls(w?"a2w":"a2l",0)+1);if(w){snd("clap");cheer=4}
  setTimeout(()=>ov("<h1>"+(w?"VICTORY!":"DEFEATED")+"</h1>","ROOM "+rcode.toUpperCase()+" · "+rec(),w?"You beat "+E.name+"!":E.name+" takes this round.","REMATCH",rematch,o=>o.appendChild(mkb("LEAVE ROOM",()=>{$("ov").className="h";leaveRoom()}))),w?2200:1500)}
-function rematch(){if(!room||!opp)return;rdMe=1;ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom);room.presence({rd:1}).catch(error=>{if(!room||!over)return;rdMe=0;ov("<h1>REMATCH ERROR</h1>","NETWORK ISSUE","Could not send the rematch request. Check the connection and try again.","TRY AGAIN",rematch)})}
+function rematch(){if(!room||!opp||!over)return;rdMe=1;ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom);room.emit("rematch").catch(error=>{if(!room||!over)return;rdMe=0;ov("<h1>REMATCH ERROR</h1>","NETWORK ISSUE","Could not send the rematch request. Check the connection and try again.","TRY AGAIN",rematch)})}
 function leaveRoom(){if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b1").style.display="";$("b2").style.display="";$("b3").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
 /* ---------- input ---------- */
 const bd=$("board"),adj=(a,b)=>Math.abs((a/N|0)-(b/N|0))+Math.abs(a%N-b%N)==1;
