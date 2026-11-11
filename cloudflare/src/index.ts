@@ -233,23 +233,10 @@ export class MatchRoom extends DurableObject<Env> {
       if (typeof data?.name === "string") clean.name = data.name.slice(0, 14);
       if (typeof data?.hat === "string") clean.hat = data.hat.slice(0, 8);
 
-      if (typeof data?.ready === "boolean") clean.ready = data.ready;
       const presence = (await this.ctx.storage.get<Record<PlayerId, PlayerPresence>>("presence")) ?? { p1: {}, p2: {} };
       presence[player] = { ...presence[player], ...clean };
       await this.ctx.storage.put("presence", presence);
       this.broadcast({ type: "presence", player, data: clean }, socket);
-      if (clean.ready) {
-        const game = await this.ctx.storage.get<MatchState>("match");
-        if (game?.status === "finished" && presence.p1.ready && presence.p2.ready) {
-          presence.p1.ready = false; presence.p2.ready = false;
-          await this.ctx.storage.put("presence", presence);
-          this.broadcast({ type: "presence", player: "p1", data: { ready: false } });
-          this.broadcast({ type: "presence", player: "p2", data: { ready: false } });
-          await this.ctx.storage.delete("match");
-          await this.ensureMatch();
-          this.broadcast({ type: "rematch_started" });
-        }
-      }
       return;
     }
 
@@ -326,7 +313,23 @@ export class MatchRoom extends DurableObject<Env> {
     }
 
     if (message.type === "rematch") {
-      this.broadcast({ type: "rematch", player }, socket);
+      const game = await this.ctx.storage.get<MatchState>("match");
+      if (!game || game.status !== "finished") {
+        socket.send(JSON.stringify({ type: "rematch_rejected", reason: "match_not_finished" }));
+        return;
+      }
+      const votes = (await this.ctx.storage.get<Record<PlayerId, boolean>>("rematchVotes")) ?? { p1: false, p2: false };
+      votes[player] = true;
+      await this.ctx.storage.put("rematchVotes", votes);
+      if (votes.p1 && votes.p2) {
+        await this.ctx.storage.delete("rematchVotes");
+        await this.ctx.storage.delete("match");
+        await this.ensureMatch();
+        this.broadcast({ type: "rematch_started" });
+      } else {
+        socket.send(JSON.stringify({ type: "rematch_waiting", accepted: true }));
+      }
+      return;
     }
   }
 
