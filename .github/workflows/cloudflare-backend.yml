@@ -12,7 +12,6 @@ on:
       - "cloudflare-client.js"
       - ".github/workflows/cloudflare-backend.yml"
       - ".github/workflows/deploy-cloudflare.yml"
-      - ".github/workflows/deploy-cloudflare.yml"
   push:
     branches:
       - main
@@ -22,6 +21,7 @@ on:
       - "index.html"
       - "cloudflare-client.js"
       - ".github/workflows/cloudflare-backend.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
 
 jobs:
   typecheck:
