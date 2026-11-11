@@ -159,24 +159,28 @@ try {
   resumed.close();
   p2.close();
 
-  const memory = new Map();
-  const localStorage = {
-    getItem(key) { return memory.has(key) ? memory.get(key) : null; },
-    setItem(key, value) { memory.set(key, String(value)); },
-    removeItem(key) { memory.delete(key); }
+  const makeBrowserAdapter = () => {
+    const memory = new Map();
+    const localStorage = {
+      getItem(key) { return memory.has(key) ? memory.get(key) : null; },
+      setItem(key, value) { memory.set(key, String(value)); },
+      removeItem(key) { memory.delete(key); }
+    };
+    const browserContext = {
+      window: {}, localStorage, fetch, WebSocket, console,
+      setTimeout, clearTimeout, setInterval, clearInterval
+    };
+    vm.runInNewContext(readFileSync("../cloudflare-client.js", "utf8"), browserContext, { filename: "cloudflare-client.js" });
+    const adapter = browserContext.window.A2Cloudflare;
+    adapter.configure(BASE);
+    return adapter;
   };
-  const browserContext = {
-    window: {}, localStorage, fetch, WebSocket, console,
-    setTimeout, clearTimeout, setInterval, clearInterval
-  };
-  vm.runInNewContext(readFileSync("../cloudflare-client.js", "utf8"), browserContext, { filename: "cloudflare-client.js" });
-  const adapter = browserContext.window.A2Cloudflare;
-  adapter.configure(BASE);
-  console.log("Starting browser adapter integration.");
-  const client1Promise = adapter.createRoom().then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
+  console.log("Starting browser adapter integration with two isolated browser sessions.");
+  const adapter1 = makeBrowserAdapter(), adapter2 = makeBrowserAdapter();
+  const client1Promise = adapter1.createRoom().then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
   const client1 = await withTimeout(client1Promise, "browser adapter room creation");
   const ready1 = new Promise(resolve => client1.on("match_started", resolve));
-  const client2Promise = adapter.joinRoom(client1.code).then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
+  const client2Promise = adapter2.joinRoom(client1.code).then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
   const client2 = await withTimeout(client2Promise, "browser adapter room join");
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
   const [clientMatch1, clientMatch2] = await withTimeout(Promise.all([ready1, ready2]), "browser adapter match start");
