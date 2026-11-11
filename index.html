@@ -110,6 +110,15 @@ h1{background:linear-gradient(#fff8d7,#9bd7ff 48%,#a68cff);-webkit-background-cl
 .champion-strip{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;max-width:340px;margin:3px auto}
 .champion-pill{border:1px solid #7797d5;background:linear-gradient(#1d2a4a,#0c1428);color:#e5edff;border-radius:10px;padding:8px 10px;font:700 11px Cinzel,Georgia,serif;letter-spacing:.4px}
 .champion-pill.selected{border-color:#f4d58a;box-shadow:0 0 14px #83a9e877;color:#fff2c9;background:linear-gradient(#39436c,#151a32)}
+
+/* Mythbeasts game modes and saga */
+.mode-grid{display:grid;grid-template-columns:1fr;gap:10px;width:min(100%,340px)}
+.mode-card{border:1px solid #83a9e8aa;border-radius:14px;padding:14px 15px;text-align:left;background:linear-gradient(135deg,#1d2a4aee,#0c1428ee);color:#e8efff;box-shadow:0 8px 22px #0006}
+.mode-card strong{display:block;font:900 15px Cinzel,Georgia,serif;letter-spacing:1px;color:#f4d58a;margin-bottom:4px}
+.mode-card span{font:600 14px "Cormorant Garamond",Georgia,serif;opacity:.9}
+.mode-card:active{transform:scale(.98)}
+.story-kicker{font:700 10px Cinzel,Georgia,serif;letter-spacing:3px;color:#a9c9ff}
+.atrox-title{color:#ff8a9a!important;text-shadow:0 0 18px #e11d48aa}
 </style></head><body>
 <div id="app">
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
@@ -173,8 +182,31 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
  if(n>=5){if(L>=3){k="slam";d=42}else if(L>=2){k="rifle";d=20}else d=18}else if(n==4){if(L>=2){k="rifle";d=18}else d=13}
  rage=Math.min(100,rage+(chain>1?3:n>=5?16:n==4?10:6));ui();const cr=Math.random()<Math.min(.25,.06+.01*L);if(cr)tx.push({s:"CRITICAL!",x:W*.69,y:H*.25,l:1,c:"#ff5a4a"});act(k,"p",Math.round(d*m*(cr?1.8:1)))}
 /* ---------- fight logic ---------- */
-function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
- tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
+const STORY=[
+ {title:"THE SHATTERED DAWN",foe:"THE ASHEN SENTINEL",beast:"FALLEN GUARDIAN",element:"🔥",hp:1.0,dm:1.0,lines:"The first fragment burns beneath the ruins of the Ember Kingdom. Its guardian has forgotten whom it was sworn to protect."},
+ {title:"THE FROZEN OATH",foe:"VAELORA, THE FROSTBOUND",beast:"ICE WRAITH",element:"❄️",hp:1.18,dm:1.08,lines:"Beyond the northern veil, an ancient oath has been twisted. The ice remembers Atrox — and trembles at his name."},
+ {title:"TEMPEST OF THE LOST",foe:"THUNDERMAW",beast:"STORM COLOSSUS",element:"⚡",hp:1.35,dm:1.16,lines:"The storm fragment calls to you. Thundermaw stands between the champions and the truth buried in the sky."},
+ {title:"THE VEIL OF NIGHT",foe:"MORVEX, THE HOLLOW",beast:"SHADOW REVENANT",element:"🌑",hp:1.52,dm:1.25,lines:"The final seal is guarded by a creature born from the Core's corruption. Beyond it waits the name whispered by every kingdom."},
+ {title:"THE LAST GOD",foe:"ATROX NEFAS",beast:"THE PRIMORDIAL TYRANT",element:"☠️",hp:2.35,dm:1.5,lines:"The fragments converge. The sky breaks open. ATROX NEFAS descends — not to conquer the world, but to reclaim the power he believes was stolen from him."}
+];
+let gameMode="classic",storyStage=0;
+function modeMenu(){
+ ov("<h1>CHOOSE YOUR DESTINY</h1>","TWO WAYS TO ENTER THE CLASH","Select a battle mode. Your champion and progression are kept separate from online matchmaking.","BACK",home,o=>{
+  const main=o.querySelector("button");main.className="btn ghost";
+  const grid=document.createElement("div");grid.className="mode-grid";
+  const card=(title,desc,fn)=>{const b=document.createElement("button");b.className="mode-card";b.innerHTML="<strong>"+title+"</strong><span>"+desc+"</span>";b.onclick=()=>{au();o.className="h";fn()};grid.appendChild(b)};
+  card("⚔ CLASSIC · 1v1","Challenge another player online in a private real-time duel.",()=>cloudDuelMenu());
+  card("🛡 CLASSIC · VS COMPUTER","Fight AI rivals, earn coins, unlock outfits and improve your champion.",()=>{gameMode="classic";setup()});
+  card("📖 STORY MODE","Five cinematic chapters. Four elemental trials. One final enemy.",()=>storyIntro(0));
+  o.insertBefore(grid,main);
+ });
+}
+function storyIntro(stage){
+ storyStage=stage;const ch=STORY[stage];
+ ov("<div class='story-kicker'>THE MYTHBEASTS SAGA · CHAPTER "+(stage+1)+" / "+STORY.length+"</div><h1 "+(stage===4?"class='atrox-title'":"")+">"+ch.title+"</h1>",ch.element+" "+ch.foe,ch.lines,stage===4?"FACE ATROX NEFAS":"ENTER CHAPTER",()=>{gameMode="story";L=stage+1;setup()});
+}
+function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};const ch=gameMode==="story"?STORY[storyStage]:null;E={hp:Math.round(e*(ch?ch.hp:1)),mx:Math.round(e*(ch?ch.hp:1)),name:ch?ch.foe:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:ch?(storyStage===4?"☠️":ch.element):(boss?"👹":HAT[(L*3)%8]),r:tr.r||0,dm:ch?ch.dm:(boss?1.3:1)};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
+ tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent=ch?"STORY · "+ch.title+" · "+ch.element+" ELEMENT":"Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
 function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make a move or unleash your charged mythic skill.":"RIVAL’S TURN · Your rival is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
 function act(k,who,dmg){if(NET&&who==="p"&&room&&typeof room.move!=="function"&&!over)room.emit("atk",{k,d:dmg}).catch(()=>{});pend++;Q=Q.then(()=>new Promise(res=>{if(over){res();return}A={k,who,dmg,t:0,d:{punch:700,rifle:1000,slam:2800}[k],imp:{punch:.45,rifle:.62,slam:.78}[k],hit:0,ko:0,res}})).then(()=>{pend--});return Q}
 function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!(NET&&room&&typeof room.move==="function"))tg.hp=Math.max(0,tg.hp-A.dmg);A.hit=1;stop=k=="slam"?.18:.07;flash=k=="slam"?.8:.3;shake=k=="slam"?20:k=="rifle"?6:10;cheer=1.3;snd(k=="slam"?"boom":k=="rifle"?"shot":"punch");
@@ -198,6 +230,13 @@ $("slam").onclick=()=>{
 function ov(h,sub,txt,btn,fn,ex){const o=$("ov");o.className="";o.innerHTML=h+(sub?`<small>${sub}</small>`:"")+`<p>${txt}</p><button class="btn" data-m>${btn}</button>`;ex&&ex(o);o.querySelector("[data-m]").onclick=()=>{au();o.className="h";fn()}}
 function wardrobe(o){const d=document.createElement("div");d.className="chips";const mh=Math.min(L-1,7);for(let i=0;i<=mh;i++){const b=document.createElement("button");b.className="chip"+((hatSel<0?mh:hatSel)==i?" on":"");b.textContent=HAT[i]||"🐑";b.onclick=()=>{hatSel=i;sv("a2h",i);[...d.children].forEach((c,j)=>c.className="chip"+(j==i?" on":""))};d.appendChild(b)}o.insertBefore(d,o.querySelector("button"))}
 function finish(){if(NET){duelEnd();return}over=true;busy=true;ui();const w=E.hp<=0;
+ if(gameMode==="story"){
+  if(w){snd("clap");cheer=4;const cleared=storyStage;storyStage++;sv("a2story",storyStage);const reward=60+(cleared+1)*35;coins+=reward;sv("a2c",coins);
+   if(storyStage>=STORY.length){setTimeout(()=>ov("<h1>THE CORE REMEMBERS</h1>","ATROX NEFAS · DEFEATED","The Primordial Core is whole once more. The elements answer to their champions — but deep beyond the veil, one ember still refuses to die. You have become a legend. The saga is not over.","RETURN TO THE ARENA",()=>{gameMode="classic";storyStage=0;home()}),1800)}
+   else setTimeout(()=>storyIntro(storyStage),1800);
+  }else setTimeout(()=>ov("<h1>FALLEN, NOT FORGOTTEN</h1>","CHAPTER "+(storyStage+1)+" · "+STORY[storyStage].title,"The fragment's power overwhelmed you. The story waits here; choose your champion, rethink your moves, and try again.","RETRY CHAPTER",()=>{L=storyStage+1;setup()}),1400);
+  return;
+ }
  if(w){snd("clap");cheer=4;const pct=P.hp/P.mx,st=pct>=.7?3:pct>=.4?2:1,reward=20+L*5+st*5;ST[L-1]=Math.max(ST[L-1]||0,st);coins+=reward;L++;sv("a2lvl",L);sv("a2c",coins);sv("a2s",ST);ui();
   const u=L==2?"NEW MOVE · RIFLE — match 4 stones.":L==3?"NEW MOVE · CHOKESLAM — match 5 stones or fill RAGE. It stuns your rival and steals their next strike!":L%5==0?"⚠️ A BOSS awaits next fight!":"Your rival grows stronger.";
   const h=HAT[Math.min(L-1,7)];setTimeout(()=>ov("<h1>K.O.!</h1>","LEVEL "+(L-1)+" CLEARED · "+"⭐".repeat(st)+"☆".repeat(3-st),"+"+reward+" 🪙 · "+u+(h&&L<=8?" NEW OUTFIT "+h:""),"NEXT FIGHT",setup,wardrobe),2200)}
@@ -459,8 +498,8 @@ $("b4").textContent=mute?"🔇":"🔊";fit();initBoard();ui();requestAnimationFr
 const CHAMPIONS=[{id:"frostfang",name:"FROSTFANG",beast:"ICE WOLF",element:"❄️",skill:"Glacial Prison",color:"#8bdcff"},{id:"solarius",name:"SOLARIUS",beast:"SUN LION",element:"🔥",skill:"Solar Rupture",color:"#ffc66d"},{id:"raijin",name:"RAIJIN",beast:"STORM TIGER",element:"⚡",skill:"Thunder Chain",color:"#d4b4ff"},{id:"vyrak",name:"VYRAK",beast:"SHADOW DRAKE",element:"🌑",skill:"Abyssal Drain",color:"#b49aff"}];
 let championId=ls("a2champion","frostfang");
 function championPicker(o){const label=document.createElement("small");label.textContent="CHOOSE YOUR CHAMPION";label.style.cssText="letter-spacing:2px;color:#d9e7ff;font:700 10px Cinzel,Georgia,serif";o.appendChild(label);const strip=document.createElement("div");strip.className="champion-strip";for(const c of CHAMPIONS){const b=document.createElement("button");b.className="champion-pill"+(championId===c.id?" selected":"");b.textContent=c.element+" "+c.name;b.onclick=()=>{championId=c.id;sv("a2champion",championId);strip.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");const p=o.querySelector(".champion-detail");if(p)p.textContent=c.beast+" · "+c.skill};strip.appendChild(b)}o.appendChild(strip);const detail=document.createElement("p");detail.className="champion-detail";const active=CHAMPIONS.find(c=>c.id===championId)||CHAMPIONS[0];detail.textContent=active.beast+" · "+active.skill;detail.style.cssText="font-size:12px;color:"+active.color;o.appendChild(detail)}
-function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));championPicker(o);wardrobe(o);o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
-function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>MYTHBEASTS CLASH</h1>`,"AWAKEN THE BEAST WITHIN","<strong>Command the Elements.</strong><br><span style=\"color:#e8c46a;font-weight:700;letter-spacing:1px\">RISE. CONQUER. BECOME LEGEND.</span><br><span style=\"font-size:14px;opacity:.82\">Choose your champion. Master elemental combat. Unleash your power and claim dominion over the arena.</span>"+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
+function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));championPicker(o);wardrobe(o);o.appendChild(mkb("⚔️ GAME MODES",modeMenu,"btn ghost"))}
+function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>MYTHBEASTS CLASH</h1>`,"AWAKEN THE BEAST WITHIN","<strong>Command the Elements.</strong><br><span style=\"color:#e8c46a;font-weight:700;letter-spacing:1px\">RISE. CONQUER. BECOME LEGEND.</span><br><span style=\"font-size:14px;opacity:.82\">Choose your champion. Master elemental combat. Unleash your power and claim dominion over the arena.</span>"+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",modeMenu,homeEx);}
 home();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(function(){});
 function hashJoin(){const c=parseCode(location.hash.slice(1));if(!c||room||NET)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}duelMenu(c)}
