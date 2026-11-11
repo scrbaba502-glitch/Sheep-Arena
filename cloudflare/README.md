@@ -29,6 +29,7 @@ cd cloudflare
 npm install
 npm run typecheck
 npm test
+npm audit --audit-level=high
 node validate-frontend.mjs
 npm run dev
 ```
