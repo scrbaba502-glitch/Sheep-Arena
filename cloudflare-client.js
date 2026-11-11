@@ -92,7 +92,10 @@
             else fire("reconnected");
           };
           socket.onerror = () => {
-            if (!resolved) reject(new Error("Could not connect to the Cloudflare multiplayer server."));
+            if (!resolved) {
+              intentionalClose = true;
+              reject(new Error("Could not connect to the Cloudflare multiplayer server."));
+            }
           };
           socket.onclose = event => {
             if (socket !== ws || intentionalClose) return;
