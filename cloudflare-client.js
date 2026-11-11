@@ -213,7 +213,7 @@
               fire(type, message);
               return;
             }
-            if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch" || type === "rematch_started") {
+            if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch" || type === "rematch_started" || type === "rematch_waiting" || type === "rematch_rejected") {
               fire(type, message);
               return;
             }
