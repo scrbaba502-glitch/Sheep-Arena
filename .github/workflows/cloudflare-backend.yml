@@ -13,6 +13,8 @@ on:
       - "feature/cloudflare-durable-objects"
     paths:
       - "cloudflare/**"
+      - "index.html"
+      - "cloudflare-client.js"
       - ".github/workflows/cloudflare-backend.yml"
 
 jobs:
