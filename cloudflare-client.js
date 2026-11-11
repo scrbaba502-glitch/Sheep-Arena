@@ -34,7 +34,7 @@
         const events = Object.create(null), peerListeners = [];
         const me = { peer: "me", isMe: true, presence: {} };
         let ws = null, rival = null, seq = 1, pendingMove = null, pendingSpecial = null;
-        let intentionalClose = false, resolved = false, reconnectAttempts = 0, reconnectTimer = null;
+        let intentionalClose = false, resolved = false, reconnectAttempts = 0, reconnectTimer = null, heartbeatTimer = null, lastPongAt = Date.now();
         const fire = (name, payload) => (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
         const peerList = () => rival ? [me, rival] : [me];
         const firePeers = () => peerListeners.forEach(fn => { try { fn(peerList()); } catch (error) { console.error(error); } });
@@ -81,6 +81,7 @@
           leave() {
             intentionalClose = true;
             if (reconnectTimer) clearTimeout(reconnectTimer);
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
             try { ws && ws.close(1000, "left_room"); } catch (_) {}
           }
         };
@@ -88,6 +89,14 @@
         const attach = socket => {
           ws = socket;
           socket.onopen = () => {
+            lastPongAt = Date.now();
+            if (!heartbeatTimer) heartbeatTimer = setInterval(() => {
+              if (intentionalClose) return;
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                if (Date.now() - lastPongAt > 45000) { try { ws.close(4000, "heartbeat_timeout"); } catch (_) {} return; }
+                try { send({ type: "ping" }); } catch (_) {}
+              }
+            }, 20000);
             if (!resolved) { resolved = true; resolve(room); }
             else fire("reconnected");
           };
@@ -118,6 +127,7 @@
             let message;
             try { message = JSON.parse(event.data); } catch (_) { return; }
             const type = message.type;
+            if (type === "pong") { lastPongAt = Date.now(); return; }
             if (type === "room_snapshot") {
               const presence = message.presence || {};
               const otherPlayer = session.player === "p1" ? "p2" : "p1";
