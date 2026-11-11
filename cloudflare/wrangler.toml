@@ -15,5 +15,5 @@ tag = "v1"
 new_sqlite_classes = ["MatchRoom"]
 
 [vars]
-# Set this to the exact deployed game origin before production.
+# Comma-separated allowlist of exact production and preview frontend origins.
 ALLOWED_ORIGIN = "https://sheeparena.vercel.app,https://sheeparena-git-feature-cloudflare-durable-objects-ay-projects4.vercel.app"
