@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>
+/* Native Android builds should open the actual 3D arena, not the legacy board screen. */
+(function(){
+  var ua=navigator.userAgent||"";
+  var nativeAndroid=/Android/i.test(ua)&&(/;\s*wv\)/i.test(ua)||/Capacitor/i.test(ua)||location.protocol==="capacitor:");
+  if(nativeAndroid && !/arena3d\.html/i.test(location.pathname)){
+    location.replace(new URL("./arena3d.html",location.href).href);
+  }
+})();
+</script>
 <title>A² Presents: Mythbeasts Clash</title>
 <script>(function(){var u=["peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js","https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"],i=0;function n(){if(window.Peer||i>=u.length)return;var t=document.createElement("script");t.src=u[i++];t.onload=function(){if(!window.Peer)n()};t.onerror=n;document.head.appendChild(t)}n()})()</script>
 <link rel="manifest" href="manifest.webmanifest">
