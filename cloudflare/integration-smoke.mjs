@@ -194,6 +194,33 @@ try {
   const [clientMove, clientAttack] = await withTimeout(Promise.all([client1.move(moveFrom, moveTo), incomingAttack]), "browser adapter move and incoming attack");
   if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
   console.log("Browser adapter move and incoming attack passed.");
+
+  const ended1 = new Promise(resolve => client1.on("match_over", resolve));
+  const ended2 = new Promise(resolve => client2.on("match_over", resolve));
+  let board = clientMove.board, finished = false;
+  for (let attempt = 0; attempt < 40 && !finished; attempt++) {
+    await delay(130);
+    const [from, to] = firstLegalSwap(board);
+    const result = await withTimeout(client1.move(from, to), "finishing the match", 12000);
+    board = result.board;
+    finished = result.status === "finished";
+  }
+  if (!finished) throw new Error("Test player could not finish the match within 40 legal moves");
+  const [end1, end2] = await withTimeout(Promise.all([ended1, ended2]), "both clients receiving match_over", 12000);
+  if (end1.winner !== "p1" || end2.winner !== "p1") throw new Error("Match result was not synchronized to both clients");
+  console.log("Browser adapter synchronized the match result.");
+
+  const rematch1 = new Promise(resolve => client1.on("rematch_started", resolve));
+  const rematch2 = new Promise(resolve => client2.on("rematch_started", resolve));
+  await Promise.all([client1.presence({ rd: 1 }), client2.presence({ rd: 1 })]);
+  await withTimeout(Promise.all([rematch1, rematch2]), "both clients accepting the rematch", 12000);
+  const restarted1 = await withTimeout(new Promise(resolve => client1.on("match_started", resolve)), "player one receiving the new match");
+  const restarted2 = await withTimeout(new Promise(resolve => client2.on("match_started", resolve)), "player two receiving the new match");
+  if (restarted1.hp !== 150 || restarted2.hp !== 150 || restarted1.board.length !== 49 || restarted2.board.length !== 49) {
+    throw new Error("Rematch did not reset both clients to fresh authoritative match state");
+  }
+  console.log("Browser adapter rematch passed: both players received fresh boards and 150 HP.");
+
   client1.leave();
   client2.leave();
   console.log("Cloudflare Worker smoke test passed: CORS, room limits, two-player start, move validation, server damage, rage validation, reconnect snapshots, and browser adapter.");
