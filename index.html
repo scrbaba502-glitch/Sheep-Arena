@@ -206,8 +206,8 @@ function applyMatchState(m){
  if(!NET){const rival=room&&room.peers().find(p=>!p.isMe);if(rival)startDuel(rival)}
  if(!NET)return;
  cloudBoard(m.board);P.hp=P.mx=Number(m.hp)||150;E.hp=E.mx=Number(m.opponentHp)||150;
- rage=Number(m.rage)||0;busy=false;over=m.status==="finished";hpPub=-1;ui();
- if(m.winner&&m.status==="finished"&&!over)finish();
+ rage=Number(m.rage)||0;busy=false;over=false;hpPub=-1;ui();
+ if(m.status==="finished")duelEnd();
 }
 async function cloudCreateRoom(){
  try{
