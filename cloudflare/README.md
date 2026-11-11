@@ -41,7 +41,7 @@ Worker routes:
 
 When a Worker is eventually deployed, configure the frontend with its HTTPS URL before the main game script runs (or set `localStorage.setItem("a2cfapi", "https://YOUR-WORKER.workers.dev")`). Until then, the adapter stays inactive and the existing PeerJS path remains available.
 
-For production, set `ALLOWED_ORIGIN` to the exact deployed frontend origin. Keep player tokens private and never put them in shareable invite URLs; share only the room code.
+Set `ALLOWED_ORIGIN` to the exact frontend origin or a comma-separated allowlist of exact origins (for example, production plus the Vercel branch preview). Avoid broad wildcard origins in production. Keep player tokens private and never put them in shareable invite URLs; share only the room code.
 
 ## Deployment status
 
