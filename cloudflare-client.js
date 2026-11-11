@@ -34,7 +34,7 @@
         const ws = new WebSocket(wsUrl);
         const events = Object.create(null), peerListeners = [];
         const me = { peer: "me", isMe: true, presence: {} };
-        let rival = null, closed = false, seq = 1, pendingMove = null, matchInfo = null;
+        let rival = null, seq = 1, pendingMove = null, matchInfo = null;
         const fire = (name, payload) => (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
         const peerList = () => rival ? [me, rival] : [me];
         const firePeers = () => peerListeners.forEach(fn => { try { fn(peerList()); } catch (error) { console.error(error); } });
@@ -104,11 +104,13 @@
             rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1 } };
             if (data.name) rival.presence.n = data.name;
             if (data.hat) rival.presence.ht = data.hat;
+            if (typeof data.ready === "boolean") rival.presence.rd = data.ready ? 1 : 0;
             firePeers();
             return;
           }
           if (type === "match_started" || type === "match_snapshot") {
             matchInfo = message;
+            seq = Number(message.nextSeq || 1);
             rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1, n: "Rival", ht: "" } };
             firePeers();
             fire(type, message);
