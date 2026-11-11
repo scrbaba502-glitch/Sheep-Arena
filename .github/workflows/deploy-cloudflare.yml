@@ -1,0 +1,50 @@
+name: Deploy Cloudflare multiplayer backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: "Type YES to deploy the Worker to the configured Cloudflare account"
+        required: true
+        type: choice
+        options:
+          - "NO"
+          - "YES"
+
+concurrency:
+  group: a2-sheep-arena-cloudflare-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ inputs.confirm_deploy == 'YES' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cloudflare
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Game engine unit tests
+        run: npm test
+      - name: Cloudflare Worker integration smoke test
+        run: npm run test:integration
+      - name: Frontend JavaScript syntax check
+        run: node validate-frontend.mjs
+      - name: Wrangler dry-run build
+        run: npm run build
+      - name: Deploy Worker and Durable Object migrations
+        run: npx wrangler deploy

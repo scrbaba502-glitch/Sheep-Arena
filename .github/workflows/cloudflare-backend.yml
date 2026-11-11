@@ -1,0 +1,49 @@
+name: Cloudflare backend checks
+
+concurrency:
+  group: cloudflare-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "cloudflare/**"
+      - "index.html"
+      - "cloudflare-client.js"
+      - ".github/workflows/cloudflare-backend.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: cloudflare
+        run: npm install
+      - name: Report dependency advisories
+        working-directory: cloudflare
+        run: |
+          npm audit --json > audit.json || true
+          node -e 'const a=require("./audit.json"); for (const [name, item] of Object.entries(a.vulnerabilities || {})) console.log(name + " " + item.severity + " fixAvailable=" + JSON.stringify(item.fixAvailable));'
+      - name: Fail on high or critical dependency advisories
+        working-directory: cloudflare
+        run: npm audit --audit-level=high
+      - name: TypeScript check
+        working-directory: cloudflare
+        run: npm run typecheck
+      - name: Game engine unit tests
+        working-directory: cloudflare
+        run: npm test
+      - name: Cloudflare Worker integration smoke test
+        working-directory: cloudflare
+        timeout-minutes: 3
+        run: npm run test:integration
+      - name: Frontend JavaScript syntax check
+        working-directory: cloudflare
+        run: node validate-frontend.mjs
+      - name: Wrangler dry-run build
+        working-directory: cloudflare
+        run: npm run build
