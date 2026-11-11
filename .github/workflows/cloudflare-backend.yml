@@ -1,5 +1,9 @@
 name: Cloudflare backend checks
 
+concurrency:
+  group: cloudflare-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
     paths:
@@ -7,6 +11,7 @@ on:
       - "index.html"
       - "cloudflare-client.js"
       - ".github/workflows/cloudflare-backend.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
       - ".github/workflows/deploy-cloudflare.yml"
   push:
     branches:
