@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import { setTimeout as delay } from "node:timers/promises";
 import { once } from "node:events";
 
@@ -144,7 +146,35 @@ try {
 
   resumed.close();
   p2.close();
-  console.log("Cloudflare Worker smoke test passed: CORS, room limits, two-player start, move validation, server damage, rage validation, and reconnect snapshot.");
+
+  const memory = new Map();
+  const localStorage = {
+    getItem(key) { return memory.has(key) ? memory.get(key) : null; },
+    setItem(key, value) { memory.set(key, String(value)); },
+    removeItem(key) { memory.delete(key); }
+  };
+  const browserContext = {
+    window: {}, localStorage, fetch, WebSocket, console,
+    setTimeout, clearTimeout, setInterval, clearInterval
+  };
+  vm.runInNewContext(readFileSync("../cloudflare-client.js", "utf8"), browserContext, { filename: "cloudflare-client.js" });
+  const adapter = browserContext.window.A2Cloudflare;
+  adapter.configure(BASE);
+  const client1 = await adapter.createRoom();
+  const ready1 = new Promise(resolve => client1.on("match_started", resolve));
+  const client2 = await adapter.joinRoom(client1.code);
+  const ready2 = new Promise(resolve => client2.on("match_started", resolve));
+  const [clientMatch1, clientMatch2] = await Promise.all([ready1, ready2]);
+  const [moveFrom, moveTo] = firstLegalSwap(clientMatch1.board);
+  const incomingAttack = new Promise(resolve => client2.on("incoming_attack", resolve));
+  const [clientMove, clientAttack] = await Promise.all([client1.move(moveFrom, moveTo), incomingAttack]);
+  if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
+  let specialRejected = false;
+  try { await client1.special(); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
+  if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
+  client1.leave();
+  client2.leave();
+  console.log("Cloudflare Worker smoke test passed: CORS, room limits, two-player start, move validation, server damage, rage validation, reconnect snapshots, and browser adapter.");
 } catch (error) {
   console.error(error);
   console.error(output);
