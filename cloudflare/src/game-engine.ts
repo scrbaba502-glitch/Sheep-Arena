@@ -149,7 +149,7 @@ export function resolveMove(
     refill(board, random);
     groups = findMatches(board);
   }
-  if (!hasLegalMove(board)) {
+  if (findMatches(board).length || !hasLegalMove(board)) {
     const fresh = createBoard(Math.floor(random() * 0xffffffff));
     for (let i = 0; i < board.length; i++) board[i] = fresh[i];
   }
