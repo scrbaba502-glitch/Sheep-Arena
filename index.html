@@ -225,7 +225,7 @@ function applyMatchState(m){
  if(!NET){const rival=room&&room.peers().find(p=>!p.isMe);if(rival)startDuel(rival)}
  if(!NET)return;
  cloudBoard(m.board);const ownHp=Number(m.hp),rivalHp=Number(m.opponentHp);P.hp=P.mx=Number.isFinite(ownHp)?Math.max(0,ownHp):150;E.hp=E.mx=Number.isFinite(rivalHp)?Math.max(0,rivalHp):150;
- rage=Number(m.rage)||0;busy=false;over=false;hpPub=-1;$("ov").className="h";ui();
+ rage=Number(m.rage)||0;pst=Math.max(0,Number(m.stunRemaining)||0);busy=false;over=false;hpPub=-1;$("ov").className="h";ui();
  if(rivalTimeout){clearTimeout(rivalTimeout);rivalTimeout=null}
  if(m.status==="finished")duelEnd();
 }
