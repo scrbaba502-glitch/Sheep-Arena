@@ -14,6 +14,8 @@ const child = spawn(process.execPath, ["node_modules/wrangler/bin/wrangler.js", 
   cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, WRANGLER_SEND_METRICS: "false" }
 });
 let output = "";
+const rawPeers = [], adapterRooms = [];
+let cleanupAdapters = false;
 child.stdout.on("data", chunk => { output = (output + chunk.toString()).slice(-4000); });
 child.stderr.on("data", chunk => { output = (output + chunk.toString()).slice(-4000); });
 
@@ -108,6 +110,7 @@ try {
   console.log("Room creation and room-capacity checks passed.");
   const wsUrl = player => "ws://127.0.0.1:" + PORT + "/api/rooms/" + created.code + "/ws?token=" + encodeURIComponent(player.playerToken);
   const p1 = new SocketPeer(wsUrl(created)), p2 = new SocketPeer(wsUrl(joined));
+  rawPeers.push(p1, p2);
   await Promise.all([p1.opened, p2.opened]);
   await Promise.all([
     p1.next(m => m.type === "connected"), p2.next(m => m.type === "connected"),
@@ -142,6 +145,7 @@ try {
   p1.close();
   await disconnected;
   const resumed = new SocketPeer(wsUrl(created));
+  rawPeers.push(resumed);
   await resumed.opened;
   await Promise.all([
     resumed.next(m => m.type === "connected"),
@@ -169,9 +173,11 @@ try {
   const adapter = browserContext.window.A2Cloudflare;
   adapter.configure(BASE);
   console.log("Starting browser adapter integration.");
-  const client1 = await withTimeout(adapter.createRoom(), "browser adapter room creation");
+  const client1Promise = adapter.createRoom().then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
+  const client1 = await withTimeout(client1Promise, "browser adapter room creation");
   const ready1 = new Promise(resolve => client1.on("match_started", resolve));
-  const client2 = await withTimeout(adapter.joinRoom(client1.code), "browser adapter room join");
+  const client2Promise = adapter.joinRoom(client1.code).then(room => { if (cleanupAdapters) room.leave(); else adapterRooms.push(room); return room; });
+  const client2 = await withTimeout(client2Promise, "browser adapter room join");
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
   const [clientMatch1, clientMatch2] = await withTimeout(Promise.all([ready1, ready2]), "browser adapter match start");
   console.log("Browser adapter synchronized both clients.");
@@ -192,6 +198,9 @@ try {
   console.error(output);
   process.exitCode = 1;
 } finally {
+  cleanupAdapters = true;
+  for (const room of adapterRooms) { try { room.leave(); } catch {} }
+  for (const peer of rawPeers) peer.close();
   if (child.exitCode === null) child.kill("SIGTERM");
   await Promise.race([once(child, "exit"), delay(3000)]);
 }
