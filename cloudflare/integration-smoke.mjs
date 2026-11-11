@@ -85,6 +85,7 @@ async function waitForServer() {
 try {
   await waitForServer();
   console.log("Local Worker is ready; exercising room and WebSocket flows.");
+  console.log("Health endpoint is reachable.");
   const health = await (await fetch(BASE + "/health")).json();
   if (!health.ok) throw new Error("Health endpoint returned an invalid response");
 
@@ -100,6 +101,7 @@ try {
   const full = await fetch(BASE + "/api/rooms/" + created.code + "/join", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
   if (full.status !== 409) throw new Error("Room accepted more than two players");
 
+  console.log("Room creation and room-capacity checks passed.");
   const wsUrl = player => "ws://127.0.0.1:" + PORT + "/api/rooms/" + created.code + "/ws?token=" + encodeURIComponent(player.playerToken);
   const p1 = new SocketPeer(wsUrl(created)), p2 = new SocketPeer(wsUrl(joined));
   await Promise.all([p1.opened, p2.opened]);
@@ -112,6 +114,7 @@ try {
     p2.next(m => m.type === "match_started")
   ]);
   if (start1.board.length !== 49 || start2.board.length !== 49) throw new Error("Match start did not provide both boards");
+  console.log("Raw WebSocket two-player match started.");
 
   p1.send({ type: "move", data: { from: 0, to: 8, seq: 1 } });
   const invalid = await p1.next(m => m.type === "move_rejected");
@@ -143,6 +146,7 @@ try {
   const snapshot = await resumed.next(m => m.type === "match_snapshot");
   const reconnected = await p2.next(m => m.type === "peer_state" && m.player === "p1" && m.connected);
   if (!reconnected.connected || snapshot.hp !== 150 || snapshot.board.length !== 49) throw new Error("Reconnect did not restore authoritative state");
+  console.log("Raw WebSocket reconnect and snapshot checks passed.");
 
   resumed.close();
   p2.close();
@@ -160,18 +164,22 @@ try {
   vm.runInNewContext(readFileSync("../cloudflare-client.js", "utf8"), browserContext, { filename: "cloudflare-client.js" });
   const adapter = browserContext.window.A2Cloudflare;
   adapter.configure(BASE);
+  console.log("Starting browser adapter integration.");
   const client1 = await adapter.createRoom();
   const ready1 = new Promise(resolve => client1.on("match_started", resolve));
   const client2 = await adapter.joinRoom(client1.code);
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
   const [clientMatch1, clientMatch2] = await Promise.all([ready1, ready2]);
+  console.log("Browser adapter synchronized both clients.");
   let specialRejected = false;
   try { await client1.special(); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
   if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
+  console.log("Browser adapter special-action validation passed.");
   const [moveFrom, moveTo] = firstLegalSwap(clientMatch1.board);
   const incomingAttack = new Promise(resolve => client2.on("incoming_attack", resolve));
   const [clientMove, clientAttack] = await Promise.all([client1.move(moveFrom, moveTo), incomingAttack]);
   if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
+  console.log("Browser adapter move and incoming attack passed.");
   client1.leave();
   client2.leave();
   console.log("Cloudflare Worker smoke test passed: CORS, room limits, two-player start, move validation, server damage, rage validation, reconnect snapshots, and browser adapter.");
