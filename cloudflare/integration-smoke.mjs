@@ -207,7 +207,8 @@ try {
 
   const ended1 = new Promise(resolve => client1.on("match_over", resolve));
   const ended2 = new Promise(resolve => client2.on("match_over", resolve));
-  const boards = { [firstRoom.player]: clientMove.board, [secondRoom.player]: clientMatch1.turn === secondRoom.player ? clientMatch1.board : clientMatch2.board };
+  const secondMatch = secondRoom === client1 ? clientMatch1 : clientMatch2;
+  const boards = { [firstRoom.player]: clientMove.board, [secondRoom.player]: secondMatch.board };
   let nextTurn = clientMove.turn, finished = false;
   for (let attempt = 0; attempt < 40 && !finished; attempt++) {
     await delay(130);
