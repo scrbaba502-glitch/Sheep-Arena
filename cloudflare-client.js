@@ -31,15 +31,15 @@
     connect(base, session) {
       return new Promise((resolve, reject) => {
         const wsUrl = base.replace(/^https:/i, "wss:") + "/api/rooms/" + encodeURIComponent(session.code) + "/ws?token=" + encodeURIComponent(session.playerToken);
-        const ws = new WebSocket(wsUrl);
         const events = Object.create(null), peerListeners = [];
         const me = { peer: "me", isMe: true, presence: {} };
-        let rival = null, seq = 1, pendingMove = null, pendingSpecial = null, matchInfo = null;
+        let ws = null, rival = null, seq = 1, pendingMove = null, pendingSpecial = null;
+        let intentionalClose = false, resolved = false, reconnectAttempts = 0, reconnectTimer = null;
         const fire = (name, payload) => (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
         const peerList = () => rival ? [me, rival] : [me];
         const firePeers = () => peerListeners.forEach(fn => { try { fn(peerList()); } catch (error) { console.error(error); } });
         const send = payload => {
-          if (ws.readyState !== WebSocket.OPEN) throw new Error("Multiplayer connection is not ready.");
+          if (!ws || ws.readyState !== WebSocket.OPEN) throw new Error("Multiplayer connection is reconnecting.");
           ws.send(JSON.stringify(payload));
         };
         const room = {
@@ -78,81 +78,113 @@
           on(name, fn) { (events[name] = events[name] || []).push(fn); },
           onPeers(fn) { peerListeners.push(fn); },
           peers: peerList,
-          leave() { closed = true; try { ws.close(1000, "left_room"); } catch (_) {} }
-        };
-        ws.onopen = () => resolve(room);
-        ws.onerror = () => { if (!room.__opened) reject(new Error("Could not connect to the Cloudflare multiplayer server.")); };
-        ws.onclose = event => {
-          closed = true;
-          if (pendingMove) { pendingMove.reject(new Error("Connection lost while processing move.")); pendingMove = null; }
-          if (pendingSpecial) { pendingSpecial.reject(new Error("Connection lost while processing special move.")); pendingSpecial = null; }
-          if (rival) { rival = null; firePeers(); }
-          fire("closed", { code: event.code, reason: event.reason });
-        };
-        ws.onmessage = event => {
-          let message;
-          try { message = JSON.parse(event.data); } catch (_) { return; }
-          const type = message.type;
-          if (type === "room_snapshot") {
-            const presence = message.presence || {};
-            const other = session.player === "p1" ? presence.p2 : presence.p1;
-            if (other && Object.keys(other).length) rival = { peer: "cloud-rival", isMe: false, presence: { v: 1, n: other.name || "Rival", ht: other.hat || "" } };
-            return;
+          leave() {
+            intentionalClose = true;
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            try { ws && ws.close(1000, "left_room"); } catch (_) {}
           }
-          if (type === "peer_state") {
-            if (message.player !== session.player) {
-              if (message.connected) {
+        };
+
+        const attach = socket => {
+          ws = socket;
+          socket.onopen = () => {
+            reconnectAttempts = 0;
+            if (!resolved) { resolved = true; resolve(room); }
+            else fire("reconnected");
+          };
+          socket.onerror = () => {
+            if (!resolved) reject(new Error("Could not connect to the Cloudflare multiplayer server."));
+          };
+          socket.onclose = event => {
+            if (socket !== ws || intentionalClose) return;
+            if (pendingMove) { pendingMove.reject(new Error("Connection interrupted; board will resynchronize.")); pendingMove = null; }
+            if (pendingSpecial) { pendingSpecial.reject(new Error("Connection interrupted; match will resynchronize.")); pendingSpecial = null; }
+            fire("reconnecting", { code: event.code, reason: event.reason, attempt: reconnectAttempts + 1 });
+            if (reconnectAttempts >= 8) {
+              fire("closed", { code: event.code, reason: event.reason, fatal: true });
+              return;
+            }
+            const delay = Math.min(1000 * Math.pow(1.7, reconnectAttempts++), 10000);
+            reconnectTimer = setTimeout(() => {
+              if (intentionalClose) return;
+              try { attach(new WebSocket(wsUrl)); }
+              catch (error) { fire("reconnecting", { error: String(error), attempt: reconnectAttempts }); }
+            }, delay);
+          };
+          socket.onmessage = event => {
+            let message;
+            try { message = JSON.parse(event.data); } catch (_) { return; }
+            const type = message.type;
+            if (type === "room_snapshot") {
+              const presence = message.presence || {};
+              const otherPlayer = session.player === "p1" ? "p2" : "p1";
+              const other = presence[otherPlayer];
+              if (other) {
+                rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1 } };
+                rival.presence.n = other.name || "Rival";
+                rival.presence.ht = other.hat || "";
+                rival.connected = Array.isArray(message.connectedPlayers) && message.connectedPlayers.includes(otherPlayer);
+                firePeers();
+              }
+              return;
+            }
+            if (type === "peer_state") {
+              if (message.player !== session.player) {
                 rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1, n: "Rival", ht: "" } };
-              } else rival = null;
+                rival.connected = !!message.connected;
+                firePeers();
+              }
+              return;
+            }
+            if (type === "presence" && message.player !== session.player) {
+              const data = message.data || {};
+              rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1 } };
+              if (data.name) rival.presence.n = data.name;
+              if (data.hat) rival.presence.ht = data.hat;
+              if (typeof data.ready === "boolean") rival.presence.rd = data.ready ? 1 : 0;
               firePeers();
+              return;
             }
-            return;
-          }
-          if (type === "presence" && message.player !== session.player) {
-            const data = message.data || {};
-            rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1 } };
-            if (data.name) rival.presence.n = data.name;
-            if (data.hat) rival.presence.ht = data.hat;
-            if (typeof data.ready === "boolean") rival.presence.rd = data.ready ? 1 : 0;
-            firePeers();
-            return;
-          }
-          if (type === "match_started" || type === "match_snapshot") {
-            matchInfo = message;
-            seq = Number(message.nextSeq || 1);
-            rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1, n: "Rival", ht: "" } };
-            firePeers();
-            fire(type, message);
-            room.__opened = true;
-            return;
-          }
-          if (type === "move_result" || type === "move_rejected") {
-            if (pendingMove && (!message.seq || message.seq === pendingMove.seq)) {
-              const pending = pendingMove; pendingMove = null;
-              if (type === "move_result") pending.resolve(message);
-              else { seq = Number(message.expectedSeq || pending.seq); pending.reject(Object.assign(new Error(message.reason || "Move rejected."), { reason: message.reason })); }
+            if (type === "match_started" || type === "match_snapshot") {
+              seq = Number(message.nextSeq || 1);
+              rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1, n: "Rival", ht: "" } };
+              rival.connected = true;
+              firePeers();
+              fire(type, message);
+              room.__opened = true;
+              return;
             }
-            fire(type, message);
-            return;
-          }
-          if (type === "special_result" || type === "special_rejected") {
-            if (pendingSpecial) {
-              const pending = pendingSpecial; pendingSpecial = null;
-              if (type === "special_result") pending.resolve(message);
-              else pending.reject(Object.assign(new Error(message.reason || "Special move rejected."), { reason: message.reason }));
+            if (type === "move_result" || type === "move_rejected") {
+              if (pendingMove && (!message.seq || message.seq === pendingMove.seq)) {
+                const pending = pendingMove; pendingMove = null;
+                if (type === "move_result") pending.resolve(message);
+                else { seq = Number(message.expectedSeq || pending.seq); pending.reject(Object.assign(new Error(message.reason || "Move rejected."), { reason: message.reason })); }
+              }
+              fire(type, message);
+              return;
             }
-            fire(type, message);
-            return;
-          }
-          if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch") {
-            fire(type, message);
-            return;
-          }
-          if (type === "connected") {
-            room.__opened = true;
-            fire("connected", message);
-          }
+            if (type === "special_result" || type === "special_rejected") {
+              if (pendingSpecial) {
+                const pending = pendingSpecial; pendingSpecial = null;
+                if (type === "special_result") pending.resolve(message);
+                else pending.reject(Object.assign(new Error(message.reason || "Special move rejected."), { reason: message.reason }));
+              }
+              fire(type, message);
+              return;
+            }
+            if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch" || type === "rematch_started") {
+              fire(type, message);
+              return;
+            }
+            if (type === "connected") {
+              room.__opened = true;
+              fire("connected", message);
+            }
+          };
         };
+
+        try { attach(new WebSocket(wsUrl)); }
+        catch (error) { reject(error); }
       });
     }
   };
