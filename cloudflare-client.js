@@ -110,10 +110,10 @@
             if (!heartbeatTimer) heartbeatTimer = setInterval(() => {
               if (intentionalClose) return;
               if (ws && ws.readyState === WebSocket.OPEN) {
-                if (Date.now() - lastPongAt > 45000) { try { ws.close(4000, "heartbeat_timeout"); } catch (_) {} return; }
+                if (Date.now() - lastPongAt > 150000) { try { ws.close(4000, "heartbeat_timeout"); } catch (_) {} return; }
                 try { send({ type: "ping" }); } catch (_) {}
               }
-            }, 20000);
+            }, 60000);
             if (!resolved) { resolved = true; resolve(room); }
             else fire("reconnected");
           };
