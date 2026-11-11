@@ -218,6 +218,16 @@ export class MatchRoom extends DurableObject<Env> {
       presence[player] = { ...presence[player], ...clean };
       await this.ctx.storage.put("presence", presence);
       this.broadcast({ type: "presence", player, data: clean }, socket);
+      if (clean.ready) {
+        const game = await this.ctx.storage.get<MatchState>("match");
+        if (game?.status === "finished" && presence.p1.ready && presence.p2.ready) {
+          presence.p1.ready = false; presence.p2.ready = false;
+          await this.ctx.storage.put("presence", presence);
+          await this.ctx.storage.delete("match");
+          await this.ensureMatch();
+          this.broadcast({ type: "rematch_started" });
+        }
+      }
       return;
     }
 
