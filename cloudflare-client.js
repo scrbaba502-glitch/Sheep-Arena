@@ -88,7 +88,6 @@
         const attach = socket => {
           ws = socket;
           socket.onopen = () => {
-            reconnectAttempts = 0;
             if (!resolved) { resolved = true; resolve(room); }
             else fire("reconnected");
           };
@@ -101,6 +100,7 @@
             if (pendingSpecial) { pendingSpecial.reject(new Error("Connection interrupted; match will resynchronize.")); pendingSpecial = null; }
             fire("reconnecting", { code: event.code, reason: event.reason, attempt: reconnectAttempts + 1 });
             if (reconnectAttempts >= 8) {
+              if (!resolved) reject(new Error("Could not connect to the Cloudflare multiplayer server."));
               fire("closed", { code: event.code, reason: event.reason, fatal: true });
               return;
             }
@@ -177,6 +177,7 @@
               return;
             }
             if (type === "connected") {
+              reconnectAttempts = 0;
               room.__opened = true;
               fire("connected", message);
             }
