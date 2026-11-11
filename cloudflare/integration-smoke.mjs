@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+import { once } from "node:events";
 
 const PORT = 8787;
 const BASE = "http://127.0.0.1:" + PORT;
-const child = spawn("npx", ["wrangler", "dev", "--ip", "127.0.0.1", "--port", String(PORT), "--log-level", "error"], {
+const child = spawn(process.execPath, ["node_modules/wrangler/bin/wrangler.js", "dev", "--ip", "127.0.0.1", "--port", String(PORT), "--log-level", "error"], {
   cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, WRANGLER_SEND_METRICS: "false" }
 });
 let output = "";
@@ -81,6 +82,7 @@ async function waitForServer() {
 
 try {
   await waitForServer();
+  console.log("Local Worker is ready; exercising room and WebSocket flows.");
   const health = await (await fetch(BASE + "/health")).json();
   if (!health.ok) throw new Error("Health endpoint returned an invalid response");
 
@@ -148,6 +150,6 @@ try {
   console.error(output);
   process.exitCode = 1;
 } finally {
-  child.kill("SIGTERM");
-  await delay(250);
+  if (child.exitCode === null) child.kill("SIGTERM");
+  await Promise.race([once(child, "exit"), delay(3000)]);
 }
