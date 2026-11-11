@@ -136,7 +136,7 @@ async function swap(a,b){
   try{
    const result=await room.move(a,b);
    if(!NET)return;
-   cloudBoard(result.board);P.hp=Number(result.hp)||P.hp;E.hp=Number(result.opponentHp)||E.hp;rage=Number(result.rage)||0;ui();
+   cloudBoard(result.board);const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
    for(const hit of (result.attacks||[]))await act(hit.kind,"p",0);
    busy=over;
   }catch(error){snd("bad");busy=false}
@@ -164,7 +164,7 @@ $("slam").onclick=()=>{
   if(rage<100||busy||over)return;
   busy=true;
   room.special().then(result=>{
-   P.hp=Number(result.hp)||P.hp;E.hp=Number(result.opponentHp)||E.hp;rage=Number(result.rage)||0;ui();
+   const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;ui();
    return act("slam","p",0);
   }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=false});
   return;
@@ -218,7 +218,7 @@ function applyMatchState(m){
  if(!m||!Array.isArray(m.board))return;
  if(!NET){const rival=room&&room.peers().find(p=>!p.isMe);if(rival)startDuel(rival)}
  if(!NET)return;
- cloudBoard(m.board);P.hp=P.mx=Number(m.hp)||150;E.hp=E.mx=Number(m.opponentHp)||150;
+ cloudBoard(m.board);const ownHp=Number(m.hp),rivalHp=Number(m.opponentHp);P.hp=P.mx=Number.isFinite(ownHp)?Math.max(0,ownHp):150;E.hp=E.mx=Number.isFinite(rivalHp)?Math.max(0,rivalHp):150;
  rage=Number(m.rage)||0;busy=false;over=false;hpPub=-1;ui();
  if(m.status==="finished")duelEnd();
 }
