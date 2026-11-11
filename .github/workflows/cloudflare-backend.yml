@@ -27,6 +27,9 @@ jobs:
       - name: TypeScript check
         working-directory: cloudflare
         run: npm run typecheck
+      - name: Game engine unit tests
+        working-directory: cloudflare
+        run: npm test
       - name: Wrangler dry-run build
         working-directory: cloudflare
         run: npm run build
