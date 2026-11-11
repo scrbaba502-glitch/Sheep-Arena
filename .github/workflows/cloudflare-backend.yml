@@ -44,6 +44,7 @@ jobs:
         run: npm test
       - name: Cloudflare Worker integration smoke test
         working-directory: cloudflare
+        timeout-minutes: 3
         run: npm run test:integration
       - name: Frontend JavaScript syntax check
         working-directory: cloudflare
