@@ -98,8 +98,16 @@ jobs:
           with open("/tmp/request.json", "w") as f:
               json.dump({
                   "model": "grok-4.7",
-                  "instructions": "You are an independent senior code reviewer. Be precise, skeptical, concise, and evidence-based.",
-                  "input": prompt,
+                  "input": [
+                      {
+                          "role": "system",
+                          "content": "You are an independent senior code reviewer. Be precise, skeptical, concise, and evidence-based."
+                      },
+                      {
+                          "role": "user",
+                          "content": prompt
+                      }
+                  ],
                   "max_output_tokens": 5000
               }, f)
           PY
