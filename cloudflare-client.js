@@ -47,11 +47,14 @@
     connect(base, session) {
       return new Promise((resolve, reject) => {
         const wsUrl = base.replace(/^https:/i, "wss:").replace(/^http:/i, "ws:") + "/api/rooms/" + encodeURIComponent(session.code) + "/ws?token=" + encodeURIComponent(session.playerToken);
-        const events = Object.create(null), peerListeners = [];
+        const events = Object.create(null), peerListeners = [], lastStateMessage = Object.create(null);
         const me = { peer: "me", isMe: true, presence: {} };
         let ws = null, rival = null, seq = 1, pendingMove = null, pendingSpecial = null;
         let intentionalClose = false, resolved = false, reconnectAttempts = 0, reconnectTimer = null, heartbeatTimer = null, lastPongAt = Date.now();
-        const fire = (name, payload) => (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
+        const fire = (name, payload) => {
+          if (name === "match_started" || name === "match_snapshot") lastStateMessage[name] = payload;
+          (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
+        };
         const peerList = () => rival ? [me, rival] : [me];
         const firePeers = () => peerListeners.forEach(fn => { try { fn(peerList()); } catch (error) { console.error(error); } });
         const send = payload => {
@@ -91,7 +94,10 @@
               catch (error) { pendingSpecial = null; rejectSpecial(error); }
             });
           },
-          on(name, fn) { (events[name] = events[name] || []).push(fn); },
+          on(name, fn) {
+            (events[name] = events[name] || []).push(fn);
+            if (lastStateMessage[name]) Promise.resolve().then(() => { try { fn(lastStateMessage[name]); } catch (error) { console.error(error); } });
+          },
           onPeers(fn) { peerListeners.push(fn); },
           peers: peerList,
           isConnected() { return !!ws && ws.readyState === WebSocket.OPEN; },
