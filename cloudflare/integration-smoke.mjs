@@ -215,8 +215,12 @@ try {
   const restarted1Promise = new Promise(resolve => client1.on("round_start", resolve));
   const restarted2Promise = new Promise(resolve => client2.on("round_start", resolve));
   const waiting1 = new Promise(resolve => client1.on("rematch_waiting", resolve));
+  const opponentWants = new Promise(resolve => client2.on("opponent_wants_rematch", resolve));
   await client1.emit("rematch");
-  await withTimeout(waiting1, "player one receiving rematch waiting acknowledgement", 5000);
+  await withTimeout(Promise.all([
+    waiting1,
+    withTimeout(opponentWants, "opponent notification", 5000)
+  ]), "first rematch vote notifications", 5000);
   await client2.emit("rematch");
   await withTimeout(Promise.all([rematch1, rematch2]), "both clients receiving rematch_started", 12000);
   const [restarted1, restarted2] = await withTimeout(Promise.all([restarted1Promise, restarted2Promise]), "both clients receiving the new match", 12000);
