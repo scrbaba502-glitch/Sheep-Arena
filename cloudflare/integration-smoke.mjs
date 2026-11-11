@@ -165,13 +165,13 @@ try {
   const client2 = await adapter.joinRoom(client1.code);
   const ready2 = new Promise(resolve => client2.on("match_started", resolve));
   const [clientMatch1, clientMatch2] = await Promise.all([ready1, ready2]);
+  let specialRejected = false;
+  try { await client1.special(); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
+  if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
   const [moveFrom, moveTo] = firstLegalSwap(clientMatch1.board);
   const incomingAttack = new Promise(resolve => client2.on("incoming_attack", resolve));
   const [clientMove, clientAttack] = await Promise.all([client1.move(moveFrom, moveTo), incomingAttack]);
   if (clientMove.board.length !== 49 || clientAttack.damage <= 0) throw new Error("Browser adapter did not complete an authoritative move");
-  let specialRejected = false;
-  try { await client1.special(); } catch (error) { specialRejected = error.reason === "rage_not_ready"; }
-  if (!specialRejected) throw new Error("Browser adapter did not surface server special-action validation");
   client1.leave();
   client2.leave();
   console.log("Cloudflare Worker smoke test passed: CORS, room limits, two-player start, move validation, server damage, rage validation, reconnect snapshots, and browser adapter.");
