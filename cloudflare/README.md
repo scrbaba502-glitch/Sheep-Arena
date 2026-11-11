@@ -8,7 +8,7 @@ This is the isolated multiplayer migration track. The existing Vercel game remai
 - One SQLite-backed Durable Object per room, with two player slots and server-issued player tokens.
 - WebSocket Hibernation-compatible handlers, presence, emoji events, ping/pong, and delayed cleanup for empty rooms.
 - Server-owned 7×7 match-3 boards, legal-swap validation, match detection, cascades, gravity/refill, critical hits, damage, rage, HP, and chokeslam stun.
-- Move sequence checks, message-size limits, per-second message limits, and a minimum action interval.
+- Serialized Durable Object state events to prevent overlapping move races, plus move sequence checks, message-size limits, per-second message limits, and a minimum action interval.
 - Reconnect snapshots that restore each player's board, HP, rage, stun duration, and next move sequence; browser session tokens are stored locally for same-device reload recovery.
 - Client heartbeat and automatic reconnect attempts, with a temporary opponent-disconnect grace period.
 - Synchronized rematch reset after both players accept.
