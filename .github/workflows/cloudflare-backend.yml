@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         working-directory: cloudflare
         run: npm install
+      - name: Report dependency advisories
+        working-directory: cloudflare
+        run: npm audit --json > audit.json || true; node -e 'const a=require("./audit.json"); for (const [name, item] of Object.entries(a.vulnerabilities || {})) console.log(name + ": " + item.severity + " (fixAvailable=" + JSON.stringify(item.fixAvailable) + ")");'
       - name: TypeScript check
         working-directory: cloudflare
         run: npm run typecheck
