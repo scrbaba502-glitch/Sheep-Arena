@@ -1,7 +1,14 @@
 (function () {
   "use strict";
   const STORAGE_KEY = "a2cfapi";
+  const sessionKey = code => "a2cf_session_" + String(code || "").toUpperCase();
   const baseUrl = () => String(window.A2_SHEEP_ARENA_API || localStorage.getItem(STORAGE_KEY) || "").trim().replace(/\/+$/, "");
+  const saveSession = (base, session) => {
+    try { localStorage.setItem(sessionKey(session.code), JSON.stringify({ ...session, base })); } catch (_) {}
+  };
+  const readSession = code => {
+    try { return JSON.parse(localStorage.getItem(sessionKey(code)) || "null"); } catch (_) { return null; }
+  };
   const json = async (url, options) => {
     const response = await fetch(url, { cache: "no-store", ...options, headers: { "content-type": "application/json", ...(options && options.headers || {}) } });
     const body = await response.json().catch(() => ({}));
@@ -20,13 +27,22 @@
       const base = baseUrl();
       if (!base) throw new Error("Cloudflare Worker URL is not configured.");
       const session = await json(base + "/api/rooms", { method: "POST", body: "{}" });
+      saveSession(base, session);
       return this.connect(base, session);
     },
     async joinRoom(code) {
+      const saved = readSession(code);
+      if (saved && saved.playerToken && saved.base) return this.connect(saved.base, saved);
       const base = baseUrl();
       if (!base) throw new Error("Cloudflare Worker URL is not configured.");
-      const session = await json(base + "/api/rooms/" + encodeURIComponent(code) + "/join", { method: "POST", body: "{}" });
-      return this.connect(base, { ...session, code });
+      const session = { ...(await json(base + "/api/rooms/" + encodeURIComponent(code) + "/join", { method: "POST", body: "{}" })), code };
+      saveSession(base, session);
+      return this.connect(base, session);
+    },
+    async resumeRoom(code) {
+      const saved = readSession(code);
+      if (!saved || !saved.playerToken || !saved.base) return null;
+      return this.connect(saved.base, saved);
     },
     connect(base, session) {
       return new Promise((resolve, reject) => {
@@ -82,6 +98,7 @@
             intentionalClose = true;
             if (reconnectTimer) clearTimeout(reconnectTimer);
             if (heartbeatTimer) clearInterval(heartbeatTimer);
+            try { localStorage.removeItem(sessionKey(session.code)); } catch (_) {}
             try { ws && ws.close(1000, "left_room"); } catch (_) {}
           }
         };
