@@ -266,11 +266,13 @@ export class MatchRoom extends DurableObject<Env> {
       }
       own.board = result.board; own.rage = result.rage; own.seq = seq; own.lastMoveAt = now;
       const damage = result.attacks.reduce((sum, attack) => sum + attack.damage, 0);
+      const stunMs = result.attacks.some(attack => attack.kind === "slam") ? 2600 : 0;
       rival.hp = Math.max(0, rival.hp - damage);
+      if (stunMs) rival.stunnedUntil = now + stunMs;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
       await this.ctx.storage.put("match", game);
       socket.send(JSON.stringify({ type: "move_result", seq, board: own.board, rage: own.rage, attacks: result.attacks, hp: own.hp, opponentHp: rival.hp, chains: result.chains, status: game.status }));
-      this.sendToPlayer(rivalId, { type: "incoming_attack", player, attacks: result.attacks, damage, hp: rival.hp, opponentHp: own.hp, status: game.status });
+      this.sendToPlayer(rivalId, { type: "incoming_attack", player, attacks: result.attacks, damage, hp: rival.hp, opponentHp: own.hp, stunMs, status: game.status });
       if (game.status === "finished") this.broadcast({ type: "match_over", winner: game.winner, hp: { p1: game.players.p1.hp, p2: game.players.p2.hp } });
       return;
     }
