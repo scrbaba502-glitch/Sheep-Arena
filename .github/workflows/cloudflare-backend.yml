@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "cloudflare/**"
+      - "index.html"
+      - "cloudflare-client.js"
       - ".github/workflows/cloudflare-backend.yml"
   push:
     branches:
@@ -30,6 +32,9 @@ jobs:
       - name: Game engine unit tests
         working-directory: cloudflare
         run: npm test
+      - name: Frontend JavaScript syntax check
+        working-directory: cloudflare
+        run: node validate-frontend.mjs
       - name: Wrangler dry-run build
         working-directory: cloudflare
         run: npm run build
