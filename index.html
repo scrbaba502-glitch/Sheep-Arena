@@ -312,13 +312,13 @@ function peerSync(ps){
  if(!op||op.connected===false){
   busy=true;
   if(!rivalTimeout){
-   ov("<h1>RIVAL RECONNECTING…</h1>","TEMPORARY DISCONNECTION","Waiting up to 20 seconds for your rival to reconnect. The match state is محفوظ on the server.","LEAVE ROOM",leaveRoom);
+   ov("<h1>RIVAL RECONNECTING…</h1>","TEMPORARY DISCONNECTION","Waiting up to 60 seconds for your rival to reconnect. The match state is saved on the server.","LEAVE ROOM",leaveRoom);
    rivalTimeout=setTimeout(()=>{
     rivalTimeout=null;
     if(NET&&opp&&(!room.peers().some(p=>!p.isMe&&p.peer===opp.peer&&p.connected!==false))){
      E.hp=0;over=false;ui();duelEnd();
     }
-   },20000);
+   },60000);
   }
   return;
  }
