@@ -346,7 +346,10 @@ export class MatchRoom extends DurableObject<Env> {
         const current = active.deserializeAttachment() as PlayerAttachment | null;
         return current?.playerId === attachment.playerId;
       });
-      if (!replacementActive) this.broadcast({ type: "peer_state", player: attachment.playerId, connected: false });
+      if (!replacementActive) {
+        await this.ctx.storage.delete("rematchVotes");
+        this.broadcast({ type: "peer_state", player: attachment.playerId, connected: false });
+      }
     }
     await this.scheduleCleanup();
   }
