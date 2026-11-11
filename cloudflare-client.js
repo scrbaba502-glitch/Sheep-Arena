@@ -52,7 +52,7 @@
         let ws = null, rival = null, seq = 1, pendingMove = null, pendingSpecial = null;
         let intentionalClose = false, resolved = false, reconnectAttempts = 0, reconnectTimer = null, heartbeatTimer = null, lastPongAt = Date.now();
         const fire = (name, payload) => {
-          if (name === "match_started" || name === "match_snapshot") lastStateMessage[name] = payload;
+          if (name === "match_started" || name === "match_snapshot" || name === "round_start") lastStateMessage[name] = payload;
           (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
         };
         const peerList = () => rival ? [me, rival] : [me];
@@ -186,7 +186,7 @@
               firePeers();
               return;
             }
-            if (type === "match_started" || type === "match_snapshot") {
+            if (type === "match_started" || type === "match_snapshot" || type === "round_start") {
               seq = Number(message.nextSeq || 1);
               rival = rival || { peer: "cloud-rival", isMe: false, presence: { v: 1, n: "Rival", ht: "" } };
               rival.connected = true;
@@ -213,7 +213,7 @@
               fire(type, message);
               return;
             }
-            if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch" || type === "rematch_started" || type === "rematch_waiting" || type === "rematch_rejected") {
+            if (type === "incoming_attack" || type === "match_over" || type === "emoji" || type === "rematch" || type === "rematch_started" || type === "rematch_waiting" || type === "rematch_rejected" || type === "opponent_wants_rematch") {
               fire(type, message);
               return;
             }
