@@ -34,7 +34,7 @@
         const ws = new WebSocket(wsUrl);
         const events = Object.create(null), peerListeners = [];
         const me = { peer: "me", isMe: true, presence: {} };
-        let rival = null, seq = 1, pendingMove = null, matchInfo = null;
+        let rival = null, seq = 1, pendingMove = null, pendingSpecial = null, matchInfo = null;
         const fire = (name, payload) => (events[name] || []).forEach(fn => { try { fn(payload); } catch (error) { console.error(error); } });
         const peerList = () => rival ? [me, rival] : [me];
         const firePeers = () => peerListeners.forEach(fn => { try { fn(peerList()); } catch (error) { console.error(error); } });
@@ -67,6 +67,14 @@
               catch (error) { pendingMove = null; seq--; rejectMove(error); }
             });
           },
+          special() {
+            if (pendingSpecial) return Promise.reject(new Error("A special move is already being processed."));
+            return new Promise((resolveSpecial, rejectSpecial) => {
+              pendingSpecial = { resolve: resolveSpecial, reject: rejectSpecial };
+              try { send({ type: "special" }); }
+              catch (error) { pendingSpecial = null; rejectSpecial(error); }
+            });
+          },
           on(name, fn) { (events[name] = events[name] || []).push(fn); },
           onPeers(fn) { peerListeners.push(fn); },
           peers: peerList,
@@ -77,6 +85,7 @@
         ws.onclose = event => {
           closed = true;
           if (pendingMove) { pendingMove.reject(new Error("Connection lost while processing move.")); pendingMove = null; }
+          if (pendingSpecial) { pendingSpecial.reject(new Error("Connection lost while processing special move.")); pendingSpecial = null; }
           if (rival) { rival = null; firePeers(); }
           fire("closed", { code: event.code, reason: event.reason });
         };
@@ -122,6 +131,15 @@
               const pending = pendingMove; pendingMove = null;
               if (type === "move_result") pending.resolve(message);
               else { seq = Number(message.expectedSeq || pending.seq); pending.reject(Object.assign(new Error(message.reason || "Move rejected."), { reason: message.reason })); }
+            }
+            fire(type, message);
+            return;
+          }
+          if (type === "special_result" || type === "special_rejected") {
+            if (pendingSpecial) {
+              const pending = pendingSpecial; pendingSpecial = null;
+              if (type === "special_result") pending.resolve(message);
+              else pending.reject(Object.assign(new Error(message.reason || "Special move rejected."), { reason: message.reason }));
             }
             fire(type, message);
             return;
