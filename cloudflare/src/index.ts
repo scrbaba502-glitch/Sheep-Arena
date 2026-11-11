@@ -66,7 +66,8 @@ export default {
         const stub = env.MATCH_ROOMS.get(id);
         const response = await stub.fetch("https://match-room.internal/create", { method: "POST" });
         if (response.status === 201) {
-          return json({ ...(await response.json()), code }, 201, corsOrigin);
+          const payload = await response.json() as Record<string, unknown>;
+          return json({ ...payload, code }, 201, corsOrigin);
         }
         if (response.status !== 409) return json({ error: "room_create_failed" }, 503, corsOrigin);
       }
