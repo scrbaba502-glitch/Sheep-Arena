@@ -57,4 +57,8 @@ The workflow runs the audit, type checks, unit tests, local Worker integration s
 
 ## Deployment status
 
-Not deployed. No Cloudflare account credentials or production Worker have been configured by this repository change. The Vercel production frontend and the default GitHub branch remain untouched.
+- The Cloudflare Worker is deployed at `https://sheep-arena.scrbaba502.workers.dev` and its `/health` endpoint has been verified.
+- The active Vercel branch preview is `https://sheeparena-pfe0f4igf-ay-projects4.vercel.app/`; its origin is included in the Worker CORS allowlist.
+- Direct room creation has returned HTTP 201, and the browser preview has subsequently created rooms successfully.
+- Two-device gameplay, synchronized attacks, and HP updates were previously exercised manually. Continue testing rematches, reconnects, and longer sessions before launch.
+- This remains a feature-branch preview, not a production cutover. The default GitHub `main` branch and production Vercel frontend remain untouched.
