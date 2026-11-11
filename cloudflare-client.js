@@ -94,6 +94,7 @@
           on(name, fn) { (events[name] = events[name] || []).push(fn); },
           onPeers(fn) { peerListeners.push(fn); },
           peers: peerList,
+          isConnected() { return !!ws && ws.readyState === WebSocket.OPEN; },
           leave() {
             intentionalClose = true;
             if (reconnectTimer) clearTimeout(reconnectTimer);
