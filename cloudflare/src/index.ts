@@ -224,6 +224,8 @@ export class MatchRoom extends DurableObject<Env> {
         if (game?.status === "finished" && presence.p1.ready && presence.p2.ready) {
           presence.p1.ready = false; presence.p2.ready = false;
           await this.ctx.storage.put("presence", presence);
+          this.broadcast({ type: "presence", player: "p1", data: { ready: false } });
+          this.broadcast({ type: "presence", player: "p2", data: { ready: false } });
           await this.ctx.storage.delete("match");
           await this.ensureMatch();
           this.broadcast({ type: "rematch_started" });
