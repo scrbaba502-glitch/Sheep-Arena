@@ -195,6 +195,13 @@ function setupCloudRoom(r){
  room.onPeers(ch=>peerSync(ch));
  room.on("match_started",applyMatchState);
  room.on("match_snapshot",applyMatchState);
+ room.on("round_start",applyMatchState);
+ room.on("rematch_waiting",()=>{
+  if(over){const p=$("ov").querySelector("p");if(p)p.textContent="Your vote is saved. Waiting for your rival…"}
+ });
+ room.on("opponent_wants_rematch",()=>{
+  if(over){const p=$("ov").querySelector("p");if(p)p.textContent="Your rival wants a rematch! Tap REMATCH to accept."}
+ });
  room.on("incoming_attack",m=>{
   if(!NET||over)return;
   P.hp=Math.max(0,Math.min(P.mx,Number(m.hp)||0));
@@ -226,6 +233,10 @@ function applyMatchState(m){
  if(!m||!Array.isArray(m.board))return;
  if(!NET){const rival=room&&room.peers().find(p=>!p.isMe);if(rival)startDuel(rival)}
  if(!NET)return;
+ // A new round must not inherit animations, stun, pending input, or result flags.
+ A=null;pend=0;Q=Promise.resolve();stop=0;flash=0;shake=0;lavaKO=false;
+ E.stun=0;pst=0;rdMe=0;sel=null;down=null;hint=null;hintT=0;eNext=1e12;
+ ps=[];tx=[];
  cloudBoard(m.board);const ownHp=Number(m.hp),rivalHp=Number(m.opponentHp);P.hp=P.mx=Number.isFinite(ownHp)?Math.max(0,ownHp):150;E.hp=E.mx=Number.isFinite(rivalHp)?Math.max(0,rivalHp):150;
  rage=Number(m.rage)||0;pst=Math.max(0,Number(m.stunRemaining)||0);busy=false;over=false;hpPub=-1;$("ov").className="h";ui();
  if(rivalTimeout){clearTimeout(rivalTimeout);rivalTimeout=null}
@@ -333,7 +344,7 @@ function peerSync(ps){
 }
 function duelEnd(){over=true;busy=true;ui();const w=E.hp<=0&&P.hp>0;sv(w?"a2w":"a2l",ls(w?"a2w":"a2l",0)+1);if(w){snd("clap");cheer=4}
  setTimeout(()=>ov("<h1>"+(w?"VICTORY!":"DEFEATED")+"</h1>","ROOM "+rcode.toUpperCase()+" · "+rec(),w?"You beat "+E.name+"!":E.name+" takes this round.","REMATCH",rematch,o=>o.appendChild(mkb("LEAVE ROOM",()=>{$("ov").className="h";leaveRoom()}))),w?2200:1500)}
-function rematch(){if(!room||!opp||!over)return;rdMe=1;ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom);room.emit("rematch").catch(error=>{if(!room||!over)return;rdMe=0;ov("<h1>REMATCH ERROR</h1>","NETWORK ISSUE","Could not send the rematch request. Check the connection and try again.","TRY AGAIN",rematch)})}
+function rematch(){if(!room||!over||(!opp&&typeof room.move!=="function"))return;rdMe=1;ov("<h1>REMATCH?</h1>","ROOM "+rcode.toUpperCase(),"Waiting for your rival to accept…","LEAVE ROOM",leaveRoom);room.emit("rematch").catch(error=>{if(!room||!over)return;rdMe=0;ov("<h1>REMATCH ERROR</h1>","NETWORK ISSUE","Could not send the rematch request. Check the connection and try again.","TRY AGAIN",rematch)})}
 function leaveRoom(){if(room){try{room.leave()}catch(e){}room=null}NET=false;opp=null;rdMe=0;hpPub=-1;if(Lsave){L=Lsave;Lsave=0}over=true;busy=true;$("b1").style.display="";$("b2").style.display="";$("b3").style.display="";$("emo").style.display="none";$("tmw").style.visibility="visible";P.hp=P.mx=100;E.hp=E.mx=100;ui();home()}
 /* ---------- input ---------- */
 const bd=$("board"),adj=(a,b)=>Math.abs((a/N|0)-(b/N|0))+Math.abs(a%N-b%N)==1;
