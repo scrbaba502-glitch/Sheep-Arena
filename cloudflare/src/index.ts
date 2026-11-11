@@ -323,11 +323,12 @@ export class MatchRoom extends DurableObject<Env> {
       await this.ctx.storage.put("rematchVotes", votes);
       if (votes.p1 && votes.p2) {
         await this.ctx.storage.delete("rematchVotes");
-        await this.ctx.storage.delete("match");
-        await this.ensureMatch();
+        await this.ensureMatch(true);
         this.broadcast({ type: "rematch_started" });
       } else {
         socket.send(JSON.stringify({ type: "rematch_waiting", accepted: true }));
+        const rivalId: PlayerId = player === "p1" ? "p2" : "p1";
+        this.sendToPlayer(rivalId, { type: "opponent_wants_rematch" });
       }
       return;
     }
@@ -369,9 +370,9 @@ export class MatchRoom extends DurableObject<Env> {
     else await this.ctx.storage.setAlarm(lastActivity + ROOM_IDLE_MS);
   }
 
-  private async ensureMatch(): Promise<void> {
+  private async ensureMatch(forceNew = false): Promise<void> {
     const existing = await this.ctx.storage.get<MatchState>("match");
-    if (existing) {
+    if (existing && !forceNew) {
       for (const socket of this.ctx.getWebSockets()) {
         const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
         if (attachment) await this.sendMatchState(socket, attachment.playerId, "match_snapshot");
@@ -389,7 +390,7 @@ export class MatchRoom extends DurableObject<Env> {
     await this.ctx.storage.put("match", match);
     for (const socket of this.ctx.getWebSockets()) {
       const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
-      if (attachment) await this.sendMatchState(socket, attachment.playerId, "match_started");
+      if (attachment) await this.sendMatchState(socket, attachment.playerId, forceNew ? "round_start" : "match_started");
     }
   }
 
