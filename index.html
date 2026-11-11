@@ -151,16 +151,16 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
 /* ---------- fight logic ---------- */
 function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
-function ui(){if(NET&&room&&hpPub!==Math.ceil(P.hp))hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
-function act(k,who,dmg){pend++;Q=Q.then(()=>new Promise(res=>{if(over){res();return}A={k,who,dmg,t:0,d:{punch:700,rifle:1000,slam:2800}[k],imp:{punch:.45,rifle:.62,slam:.78}[k],hit:0,ko:0,res}})).then(()=>{pend--});return Q}
-function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!NET)tg.hp=Math.max(0,tg.hp-A.dmg);A.hit=1;stop=k=="slam"?.18:.07;flash=k=="slam"?.8:.3;shake=k=="slam"?20:k=="rifle"?6:10;cheer=1.3;snd(k=="slam"?"boom":k=="rifle"?"shot":"punch");
+function ui(){if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
+function act(k,who,dmg){if(NET&&who==="p"&&room&&typeof room.move!=="function"&&!over)room.emit("atk",{k,d:dmg}).catch(()=>{});pend++;Q=Q.then(()=>new Promise(res=>{if(over){res();return}A={k,who,dmg,t:0,d:{punch:700,rifle:1000,slam:2800}[k],imp:{punch:.45,rifle:.62,slam:.78}[k],hit:0,ko:0,res}})).then(()=>{pend--});return Q}
+function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!(NET&&room&&typeof room.move==="function"))tg.hp=Math.max(0,tg.hp-A.dmg);A.hit=1;stop=k=="slam"?.18:.07;flash=k=="slam"?.8:.3;shake=k=="slam"?20:k=="rifle"?6:10;cheer=1.3;snd(k=="slam"?"boom":k=="rifle"?"shot":"punch");
  tx.push({s:k=="punch"?"POW!":k=="rifle"?"BANG!":"SLAM!!",x,y:H*.38,l:1,c:k=="slam"?"#ff7a1a":"#fff"});
  for(let i=0;i<(k=="slam"?50:16);i++)ps.push({x,y:fy-30*s,vx:(Math.random()-.5)*(k=="slam"?600:300),vy:-Math.random()*(k=="slam"?500:250),l:.8,m:.8,c:k=="slam"?"255,120,20":"255,230,150",r:3+Math.random()*3});
  if(tg.hp<=0){A.ko=1;if(k=="slam")lavaKO=true}else if(k=="slam"){if(tg===E){E.stun=2600;eNext=T+eInt*2}else pst=2600;tx.push({s:"STUNNED! 💫",x,y:H*.52,l:1.6,c:"#9ee7ff"})}try{navigator.vibrate&&navigator.vibrate(k=="slam"?[60,40,120]:25)}catch(e){}ui()}
 function enemyAct(){const r=Math.random(),d=(5+L*1.6)*E.dm,k=L>=4&&r<.12?"slam":L>=2&&r<.4+E.r*.3?"rifle":"punch";act(k,"e",Math.round(d*{punch:1,rifle:1.7,slam:3.2}[k]))}
 $("slam").onclick=()=>{
  au();
- if(NET&&room){
+ if(NET&&room&&typeof room.special==="function"){
   if(rage<100||busy||over)return;
   busy=true;
   room.special().then(result=>{
@@ -298,7 +298,7 @@ function lobby(code){const C=code.toUpperCase();
    try{if(navigator.share){await navigator.share({title:"A² Sheep Arena",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
    try{await navigator.clipboard.writeText(u);el.textContent="✓ LINK COPIED"}catch(x){el.textContent="CODE · "+C}},"btn");
   o.insertBefore(inv,bt);bt.className="btn ghost"})}
-function startDuel(op){opp=op;NET=true;if(!Lsave)Lsave=L;L=9;$("ov").className="h";setup();P.hp=P.mx=150;E.hp=E.mx=150;E.name="⚔️ "+String(op.presence.n||"Rival").slice(0,14);E.hat=op.presence.ht||"";eNext=1e12;$("b1").style.display="none";$("b2").style.display="none";$("b3").style.display="none";$("emo").style.display="flex";$("tmw").style.visibility="hidden";hpPub=150;room.presence({hp:150,ht:P.hat,rd:0});$("hint").textContent="DUEL · Match stones to hit your rival. Chokeslam stuns them!";ui()}
+function startDuel(op){opp=op;NET=true;if(!Lsave)Lsave=L;L=9;$("ov").className="h";setup();P.hp=P.mx=150;E.hp=E.mx=150;E.name="⚔️ "+String(op.presence.n||"Rival").slice(0,14);E.hat=op.presence.ht||"";eNext=1e12;const serverAuth=typeof room.move==="function";$("b1").style.display=serverAuth?"none":"";$("b2").style.display="none";$("b3").style.display=serverAuth?"none":"";$("emo").style.display="flex";$("tmw").style.visibility="hidden";hpPub=150;room.presence({hp:150,ht:P.hat,rd:0});$("hint").textContent="DUEL · Match stones to hit your rival. Chokeslam stuns them!";ui()}
 function peerSync(ps){
  if(!room)return;
  const o=ps.filter(p=>!p.isMe);
