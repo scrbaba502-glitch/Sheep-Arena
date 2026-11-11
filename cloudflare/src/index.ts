@@ -170,6 +170,7 @@ export class MatchRoom extends DurableObject<Env> {
       const connectedPlayers = this.ctx.getWebSockets().map((active) => (active.deserializeAttachment() as PlayerAttachment | null)?.playerId).filter(Boolean);
       server.send(JSON.stringify({ type: "room_snapshot", presence, connectedPlayers }));
       await this.ctx.storage.put("lastActivity", Date.now());
+      await this.ctx.storage.deleteAlarm();
       this.broadcast({ type: "peer_state", player: playerId, connected: true }, server);
       if (this.ctx.getWebSockets().length === 2) await this.ensureMatch();
       else await this.sendMatchState(server, playerId, "match_snapshot");
@@ -333,8 +334,7 @@ export class MatchRoom extends DurableObject<Env> {
   async alarm(): Promise<void> {
     const sockets = this.ctx.getWebSockets();
     if (sockets.length > 0) {
-      await this.ctx.storage.put("lastActivity", Date.now());
-      await this.ctx.storage.setAlarm(Date.now() + ROOM_IDLE_MS);
+      await this.ctx.storage.deleteAlarm();
       return;
     }
     const lastActivity = (await this.ctx.storage.get<number>("lastActivity")) ?? 0;
@@ -404,9 +404,11 @@ export class MatchRoom extends DurableObject<Env> {
   }
 
   private async scheduleCleanup(): Promise<void> {
-    if (this.ctx.getWebSockets().length === 0) {
-      await this.ctx.storage.put("lastActivity", Date.now());
-      await this.ctx.storage.setAlarm(Date.now() + ROOM_IDLE_MS);
+    if (this.ctx.getWebSockets().length > 0) {
+      await this.ctx.storage.deleteAlarm();
+      return;
     }
+    await this.ctx.storage.put("lastActivity", Date.now());
+    await this.ctx.storage.setAlarm(Date.now() + ROOM_IDLE_MS);
   }
 }
