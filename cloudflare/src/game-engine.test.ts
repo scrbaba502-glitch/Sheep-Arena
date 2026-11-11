@@ -60,6 +60,8 @@ describe("authoritative match-3 engine", () => {
     expect(first).toEqual(second);
     expect(first.board).toHaveLength(BOARD_SIZE * BOARD_SIZE);
     expect(first.board.every(tile => tile >= 0 && tile < 5)).toBe(true);
+    expect(findMatches(first.board)).toHaveLength(0);
+    expect(hasLegalMove(first.board)).toBe(true);
     expect(first.attacks.length).toBeGreaterThan(0);
     expect(first.chains).toBeGreaterThan(0);
     expect(first.rage).toBeGreaterThanOrEqual(0);
