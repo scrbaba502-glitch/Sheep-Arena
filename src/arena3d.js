@@ -26,7 +26,7 @@ const keys={ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",ArrowUp
 addEventListener("keydown",e=>{if(keys[e.code]){held[keys[e.code]]=true;e.preventDefault()}});
 addEventListener("keyup",e=>{if(keys[e.code])held[keys[e.code]]=false});
 function bindHold(id,key){const el=document.querySelector("#"+id);if(!el)return;const on=e=>{e.preventDefault();held[key]=true};const off=()=>held[key]=false;el.addEventListener("pointerdown",on);["pointerup","pointercancel","pointerleave"].forEach(n=>el.addEventListener(n,off))}
-bindHold("left","left");bindHold("right","right");bindHold("forward","forward");bindHold("back","back");
+bindHold("left","left");bindHold("right","right");bindHold("forward","forward");bindHold("backMove","back");
 function updateBars(){heroBar.style.width=heroHealth+"%";bossBar.style.width=bossHealth+"%"}
 function announce(s){caption.textContent=s}
 function burst(at,color,count=20){for(let i=0;i<count;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.045,6,6),new THREE.MeshBasicMaterial({color,transparent:true}));p.position.copy(at);p.userData.velocity=new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5);p.userData.life=.65;particles.add(p)}}
