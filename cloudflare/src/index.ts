@@ -165,7 +165,8 @@ export class MatchRoom extends DurableObject<Env> {
       server.serializeAttachment({ playerId, lastMessageAt: 0, messageWindowAt: Date.now(), messageCount: 0 } satisfies PlayerAttachment);
       server.send(JSON.stringify({ type: "connected", player: playerId, protocol: 1 }));
       const presence = (await this.ctx.storage.get<Record<PlayerId, PlayerPresence>>("presence")) ?? { p1: {}, p2: {} };
-      server.send(JSON.stringify({ type: "room_snapshot", presence }));
+      const connectedPlayers = this.ctx.getWebSockets().map((active) => (active.deserializeAttachment() as PlayerAttachment | null)?.playerId).filter(Boolean);
+      server.send(JSON.stringify({ type: "room_snapshot", presence, connectedPlayers }));
       await this.ctx.storage.put("lastActivity", Date.now());
       this.broadcast({ type: "peer_state", player: playerId, connected: true }, server);
       if (this.ctx.getWebSockets().length === 2) await this.ensureMatch();
@@ -310,7 +311,14 @@ export class MatchRoom extends DurableObject<Env> {
 
   async webSocketClose(socket: WebSocket, code: number, reason: string): Promise<void> {
     const attachment = socket.deserializeAttachment() as PlayerAttachment | null;
-    if (attachment) this.broadcast({ type: "peer_state", player: attachment.playerId, connected: false });
+    if (attachment) {
+      const replacementActive = this.ctx.getWebSockets().some((active) => {
+        if (active === socket) return false;
+        const current = active.deserializeAttachment() as PlayerAttachment | null;
+        return current?.playerId === attachment.playerId;
+      });
+      if (!replacementActive) this.broadcast({ type: "peer_state", player: attachment.playerId, connected: false });
+    }
     await this.scheduleCleanup();
   }
 
