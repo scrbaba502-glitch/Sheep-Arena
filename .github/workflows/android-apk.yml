@@ -32,6 +32,8 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
       - name: Install dependencies
         run: npm install
+      - name: Validate 3D game JavaScript syntax
+        run: node --check src/arena3d.js
       - name: Build web application
         run: npm run build
       - name: Generate Android project
