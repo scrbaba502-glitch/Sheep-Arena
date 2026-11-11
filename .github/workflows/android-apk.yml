@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - android-3d-prototype
+      - feature/mythbeasts-3d-foundation
 permissions:
   contents: read
 jobs:
