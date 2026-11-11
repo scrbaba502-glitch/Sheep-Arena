@@ -214,7 +214,14 @@ try {
     await delay(130);
     const activeRoom = nextTurn === client1.player ? client1 : client2;
     const [from, to] = firstLegalSwap(boards[nextTurn]);
-    const result = await withTimeout(activeRoom.move(from, to), "finishing the match", 12000);
+    let result;
+    try {
+      result = await withTimeout(activeRoom.move(from, to), "finishing the match", 12000);
+    } catch (error) {
+      if (error.reason !== "player_stunned" && error.reason !== "move_too_fast") throw error;
+      await delay(error.reason === "player_stunned" ? 2700 : 150);
+      result = await withTimeout(activeRoom.move(from, to), "retrying after action cooldown", 12000);
+    }
     boards[nextTurn] = result.board;
     nextTurn = result.turn;
     finished = result.status === "finished";
