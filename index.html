@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>A² Presents: Mythbeasts Arena</title>
+<title>A² Presents: Mythbeasts Clash</title>
 <script>(function(){var u=["peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js","https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"],i=0;function n(){if(window.Peer||i>=u.length)return;var t=document.createElement("script");t.src=u[i++];t.onload=function(){if(!window.Peer)n()};t.onerror=n;document.head.appendChild(t)}n()})()</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="description" content="A² Presents: Mythbeasts Arena — mythical beast champions, elemental powers and real-time match-3 duels.">
+<meta name="description" content="A² Presents: Mythbeasts Clash — mythical beast champions, elemental powers and real-time match-3 duels.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a0a10">
@@ -104,6 +104,12 @@ h1{background:linear-gradient(#fff8d7,#9bd7ff 48%,#a68cff);-webkit-background-cl
 #bst button{border-color:#7797d5;background:linear-gradient(#1d2a4a,#0c1428);color:#dce8ff}
 .hp{border-color:#83a9e8}
 @media(max-height:650px){#turnclock{font-size:11px;min-width:42px}}
+
+#ov h1{font-size:clamp(30px,8vw,48px);letter-spacing:2px}
+#ov .stats{border:1px solid #83a9e866;border-radius:12px;padding:8px 14px;background:#0b1429aa}
+.champion-strip{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;max-width:340px;margin:3px auto}
+.champion-pill{border:1px solid #7797d5;background:linear-gradient(#1d2a4a,#0c1428);color:#e5edff;border-radius:10px;padding:8px 10px;font:700 11px Cinzel,Georgia,serif;letter-spacing:.4px}
+.champion-pill.selected{border-color:#f4d58a;box-shadow:0 0 14px #83a9e877;color:#fff2c9;background:linear-gradient(#39436c,#151a32)}
 </style></head><body>
 <div id="app">
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
@@ -282,7 +288,7 @@ function cloudLobby(code){
  const C=code.toUpperCase();
  ov('<small>ROOM</small><div class="code">'+[...C].map(x=>"<b>"+x+"</b>").join("")+'</div>',"WAITING FOR YOUR RIVAL","Cloudflare room ready. Share the invite link; the match starts when your rival joins.","CANCEL",leaveRoom,o=>{
   const bt=o.querySelector("button"),inv=mkb("✉️ INVITE FRIEND",async e=>{const el=e.currentTarget,u=link(C);
-   try{if(navigator.share){await navigator.share({title:"A² Sheep Arena",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
+   try{if(navigator.share){await navigator.share({title:"A² Mythbeasts Clash",text:"Fight me in A² Mythbeasts Clash! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
    try{await navigator.clipboard.writeText(u);el.textContent="✓ LINK COPIED"}catch(x){el.textContent="CODE · "+C}},"btn");
   o.insertBefore(inv,bt);bt.className="btn ghost"
  });
@@ -329,7 +335,7 @@ function openRoom(R,code,host,tries=0){rcode=code;opp=null;rdMe=0;NET=false;let 
 function lobby(code){const C=code.toUpperCase();
  ov('<small>ROOM</small><div class="code">'+[...C].map(x=>"<b>"+x+"</b>").join("")+"</div>","WAITING FOR YOUR RIVAL","Tap Invite to share a one-tap link. The fight starts the moment they arrive.","CANCEL",leaveRoom,o=>{
   const bt=o.querySelector("button"),inv=mkb("✉️ INVITE FRIEND",async e=>{const el=e.currentTarget,u=link(C);
-   try{if(navigator.share){await navigator.share({title:"A² Sheep Arena",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
+   try{if(navigator.share){await navigator.share({title:"A² Mythbeasts Clash",text:"Fight me in A² Mythbeasts Clash! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
    try{await navigator.clipboard.writeText(u);el.textContent="✓ LINK COPIED"}catch(x){el.textContent="CODE · "+C}},"btn");
   o.insertBefore(inv,bt);bt.className="btn ghost"})}
 function startDuel(op){opp=op;NET=true;if(!Lsave)Lsave=L;L=9;$("ov").className="h";setup();P.hp=P.mx=150;E.hp=E.mx=150;E.name="⚔️ "+String(op.presence.n||"Rival").slice(0,14);E.hat=op.presence.ht||"";eNext=1e12;const serverAuth=typeof room.move==="function";$("b1").style.display=serverAuth?"none":"";$("b2").style.display="none";$("b3").style.display=serverAuth?"none":"";$("emo").style.display="flex";$("tmw").style.visibility="hidden";hpPub=150;room.presence({hp:150,ht:P.hat,rd:0});$("hint").textContent="DUEL · Match stones to hit your rival. Chokeslam stuns them!";ui()}
@@ -419,7 +425,7 @@ function render(dt){X.save();flash=Math.max(0,flash-dt*2.2);const z=A&&A.k=="sla
  const bl=W*.12,br=W*.88,bt=H*.52,fl=W*.02,fr=W*.98,fb=H*.8,hb=H*.14,hf=H*.2;
  rope(bl,bt,br,bt,hb);
  X.fillStyle="#1a0d0a";X.beginPath();X.moveTo(fl,fb);X.lineTo(fr,fb);X.lineTo(fr,H*.9);X.lineTo(fl,H*.9);X.fill();X.fillStyle="#c28a24";X.fillRect(fl,fb,fr-fl,3);
- X.fillStyle="rgba(243,210,122,.7)";X.font="900 "+H*.05+"px Cinzel,Georgia,serif";X.textAlign="center";X.fillText("A²  SHEEP ARENA",W/2,H*.865);
+ X.fillStyle="rgba(243,210,122,.7)";X.font="900 "+H*.05+"px Cinzel,Georgia,serif";X.textAlign="center";X.fillText("A²  MYTHBEASTS CLASH",W/2,H*.865);
  g=X.createLinearGradient(0,H*.9,0,H);g.addColorStop(0,"#ff7a12");g.addColorStop(1,"#8a1604");X.fillStyle=g;X.fillRect(0,H*.9,W,H*.1);X.globalCompositeOperation="lighter";X.strokeStyle="rgba(255,220,120,.5)";X.lineWidth=2;for(let i=0;i<8;i++){const x=(i*W/7+T*.02*(i%2?1:-1)+W)%W;X.beginPath();X.arc(x,H*.95,8+Math.sin(T*.004+i)*3,0,3.14);X.stroke()}X.globalCompositeOperation="source-over";
  g=X.createLinearGradient(0,bt,0,fb);g.addColorStop(0,"#1b2a66");g.addColorStop(1,"#2a3f95");X.fillStyle=g;X.beginPath();X.moveTo(bl,bt);X.lineTo(br,bt);X.lineTo(fr,fb);X.lineTo(fl,fb);X.fill();X.strokeStyle="#c28a24";X.lineWidth=3;X.stroke();
  X.save();X.clip();X.fillStyle="rgba(255,255,255,.05)";for(let i=-10;i<24;i++){X.beginPath();X.moveTo(i*W/12,bt);X.lineTo(i*W/12+W/24,bt);X.lineTo(i*W/12+W/24-W*.1,fb);X.lineTo(i*W/12-W*.1,fb);X.fill()}
@@ -450,8 +456,11 @@ function loop(n){requestAnimationFrame(loop);let dt=Math.min(.05,(n-last)/1000);
  try{render(dt)}catch(e){console.error(e)}}
 const day=new Date().toDateString();let streak=ls("a2k",0),dmsg="";if(ls("a2d","")!=day){streak=ls("a2d","")==new Date(Date.now()-864e5).toDateString()?streak+1:1;const r=10*Math.min(streak,7);coins+=r;sv("a2d",day);sv("a2k",streak);sv("a2c",coins);dmsg=" 🎁 Daily reward +"+r+" 🪙 · "+streak+"-day streak!"}
 $("b4").textContent=mute?"🔇":"🔊";fit();initBoard();ui();requestAnimationFrame(loop);
-function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));wardrobe(o);o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
-function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>MYTHBEASTS</h1>`,"MYTHIC CREATURES · ELEMENTAL CLASH","Choose your champion, chain elemental matches, awaken legendary skills and unleash devastating power-ups. Build your legend one duel at a time."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
+const CHAMPIONS=[{id:"frostfang",name:"FROSTFANG",beast:"ICE WOLF",element:"❄️",skill:"Glacial Prison",color:"#8bdcff"},{id:"solarius",name:"SOLARIUS",beast:"SUN LION",element:"🔥",skill:"Solar Rupture",color:"#ffc66d"},{id:"raijin",name:"RAIJIN",beast:"STORM TIGER",element:"⚡",skill:"Thunder Chain",color:"#d4b4ff"},{id:"vyrak",name:"VYRAK",beast:"SHADOW DRAKE",element:"🌑",skill:"Abyssal Drain",color:"#b49aff"}];
+let championId=ls("a2champion","frostfang");
+function championPicker(o){const label=document.createElement("small");label.textContent="CHOOSE YOUR CHAMPION";label.style.cssText="letter-spacing:2px;color:#d9e7ff;font:700 10px Cinzel,Georgia,serif";o.appendChild(label);const strip=document.createElement("div");strip.className="champion-strip";for(const c of CHAMPIONS){const b=document.createElement("button");b.className="champion-pill"+(championId===c.id?" selected":"");b.textContent=c.element+" "+c.name;b.onclick=()=>{championId=c.id;sv("a2champion",championId);strip.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");const p=o.querySelector(".champion-detail");if(p)p.textContent=c.beast+" · "+c.skill};strip.appendChild(b)}o.appendChild(strip);const detail=document.createElement("p");detail.className="champion-detail";const active=CHAMPIONS.find(c=>c.id===championId)||CHAMPIONS[0];detail.textContent=active.beast+" · "+active.skill;detail.style.cssText="font-size:12px;color:"+active.color;o.appendChild(detail)}
+function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));championPicker(o);wardrobe(o);o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
+function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>MYTHBEASTS CLASH</h1>`,"MYTHIC CREATURES · ELEMENTAL CLASH","Choose a mythical champion, chain elemental matches, awaken signature skills and unleash devastating power-ups. Claim your place in the Clash."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
 home();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(function(){});
 function hashJoin(){const c=parseCode(location.hash.slice(1));if(!c||room||NET)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}duelMenu(c)}
