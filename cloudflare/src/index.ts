@@ -259,13 +259,22 @@ export class MatchRoom extends DurableObject<Env> {
       }
       const own = game.players[player], rivalId: PlayerId = player === "p1" ? "p2" : "p1";
       const rival = game.players[rivalId];
+      const now = Date.now();
+      if (now >= game.turnStartedAt + 20_000) {
+        game.turn = game.turn === "p1" ? "p2" : "p1";
+        game.turnStartedAt = now;
+        await this.ctx.storage.put("match", game);
+        await this.ctx.storage.setAlarm(now + 20_000);
+        this.broadcast({ type: "turn_update", turn: game.turn, turnStartedAt: now, timedOut: true });
+        socket.send(JSON.stringify({ type: "move_rejected", reason: "turn_expired", seq, turn: game.turn }));
+        return;
+      }
       if (game.turn !== player) {
         socket.send(JSON.stringify({ type: "move_rejected", reason: "not_your_turn", seq, expectedSeq: own.seq + 1, turn: game.turn })); return;
       }
       if (seq !== own.seq + 1) {
         socket.send(JSON.stringify({ type: "move_rejected", reason: "sequence_mismatch", seq, expectedSeq: own.seq + 1 })); return;
       }
-      const now = Date.now();
       if (now < own.stunnedUntil) {
         socket.send(JSON.stringify({ type: "move_rejected", reason: "player_stunned", seq, expectedSeq: own.seq + 1 })); return;
       }
@@ -299,6 +308,15 @@ export class MatchRoom extends DurableObject<Env> {
       }
       const own = game.players[player], rivalId: PlayerId = player === "p1" ? "p2" : "p1";
       const rival = game.players[rivalId], now = Date.now();
+      if (now >= game.turnStartedAt + 20_000) {
+        game.turn = game.turn === "p1" ? "p2" : "p1";
+        game.turnStartedAt = now;
+        await this.ctx.storage.put("match", game);
+        await this.ctx.storage.setAlarm(now + 20_000);
+        this.broadcast({ type: "turn_update", turn: game.turn, turnStartedAt: now, timedOut: true });
+        socket.send(JSON.stringify({ type: "special_rejected", reason: "turn_expired", turn: game.turn }));
+        return;
+      }
       if (game.turn !== player) {
         socket.send(JSON.stringify({ type: "special_rejected", reason: "not_your_turn", turn: game.turn })); return;
       }
@@ -311,14 +329,15 @@ export class MatchRoom extends DurableObject<Env> {
       own.rage = 0; own.lastMoveAt = now; rival.hp = Math.max(0, rival.hp - 46);
       rival.stunnedUntil = now + 2600;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
-      else game.turn = rivalId;
+      else { game.turn = rivalId; game.turnStartedAt = now; await this.ctx.storage.setAlarm(now + 20_000); }
+      if (game.status === "finished") await this.ctx.storage.deleteAlarm();
       await this.ctx.storage.put("match", game);
-      socket.send(JSON.stringify({ type: "special_result", kind: "slam", damage: 46, rage: own.rage, hp: own.hp, opponentHp: rival.hp, status: game.status, turn: game.turn }));
+      socket.send(JSON.stringify({ type: "special_result", kind: "slam", damage: 46, rage: own.rage, hp: own.hp, opponentHp: rival.hp, status: game.status, turn: game.turn, turnStartedAt: game.turnStartedAt }));
       this.sendToPlayer(rivalId, {
         type: "incoming_attack", player, attacks: [{ kind: "slam", damage: 46, chain: 0, cleared: 0, critical: false }],
         damage: 46, hp: rival.hp, opponentHp: own.hp, stunMs: 2600, status: game.status, turn: game.turn, turnStartedAt: game.turnStartedAt
       });
-      this.broadcast({ type: "turn_update", turn: game.turn });
+      this.broadcast({ type: "turn_update", turn: game.turn, turnStartedAt: game.turnStartedAt });
       if (game.status === "finished") this.broadcast({ type: "match_over", winner: game.winner, hp: { p1: game.players.p1.hp, p2: game.players.p2.hp } });
       return;
     }
