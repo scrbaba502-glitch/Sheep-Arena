@@ -136,9 +136,10 @@ h1{background:linear-gradient(#fff8d7,#9bd7ff 48%,#a68cff);-webkit-background-cl
 const $=id=>document.getElementById(id),N=7,sleep=ms=>new Promise(r=>setTimeout(r,ms)),hash=n=>{const x=Math.sin(n*127.1)*43758.5;return x-Math.floor(x)};
 const COL=["#ff3b4e","#ffb020","#22c55e","#3b82f6","#a855f7"],SH=["circle(50% at 50% 50%)","polygon(50% 0,100% 50%,50% 100%,0 50%)","inset(6% round 22%)","polygon(50% 4%,98% 92%,2% 92%)","polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)"];
 const HAT=["","🕶️","🤠","🎩","🎧","👑","🦸","🔥"],ENM=["Baa-rbarian","Wool Vader","Ram-bo","Lord Fleece","Baa-tman","Sir Wool-ot","Captain Mutton","Count Ewe-la"];
+
+const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const CHAMPIONS=[{id:"frostfang",name:"FROSTFANG",beast:"ICE WOLF",element:"❄️",skill:"Glacial Prison",color:"#8bdcff"},{id:"solarius",name:"SOLARIUS",beast:"SUN LION",element:"🔥",skill:"Solar Rupture",color:"#ffc66d"},{id:"raijin",name:"RAIJIN",beast:"STORM TIGER",element:"⚡",skill:"Thunder Chain",color:"#d4b4ff"},{id:"vyrak",name:"VYRAK",beast:"SHADOW DRAKE",element:"🌑",skill:"Abyssal Drain",color:"#b49aff"}];
 let championId=ls("a2champion","frostfang");
-const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let L=ls("a2lvl",1),coins=ls("a2c",0),ST=ls("a2s",{}),hatSel=ls("a2h",-1),mute=ls("a2m",0);
 const TR=[{hp:1,iv:1,t:"BRAWLER"},{hp:1.5,iv:1.1,t:"TANK"},{hp:.9,iv:.7,t:"SPEEDSTER"},{hp:1,iv:1,r:.7,t:"SNIPER"}];
 let stop=0,flash=0,room=null,activeTurn=null,turnStartedAt=0,NET=false,Lsave=0,opp=null,rdMe=0,hpPub=-1,rcode="",myName=ls("a2n","Sheep"+(10+Math.random()*89|0)),hint=null,hintT=0,pst=0,P={hp:100,mx:100,hat:""},E={hp:100,mx:100,name:"",hat:"👑",r:0,dm:1},G=[],busy=true,over=true,A=null,Q=Promise.resolve(),pend=0,rage=0,cheer=0,eNext=0,eInt=5000,T=0,ps=[],tx=[],shake=0,sel=null,down=null,lavaKO=false,rivalTimeout=null;
