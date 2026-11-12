@@ -120,7 +120,7 @@ try {
     p1.next(m => m.type === "match_started"),
     p2.next(m => m.type === "match_started")
   ]);
-  if (start1.board.length !== 49 || start2.board.length !== 49 || !["p1","p2"].includes(start1.turn) || start1.turn !== start2.turn) throw new Error("Match start did not synchronize both boards and the first turn");
+  if (start1.board.length !== 49 || start2.board.length !== 49 || start1.turn !== "p1" || start2.turn !== "p1") throw new Error("Match must start with Player 1 and synchronize both boards");
   console.log("Raw WebSocket two-player match started with a synchronized first turn.");
 
   const firstSocket = start1.turn === "p1" ? p1 : p2;
@@ -142,6 +142,9 @@ try {
   ]);
   if (!move.board || move.board.length !== 49 || !move.attacks.length || move.turn !== (start1.turn === "p1" ? "p2" : "p1")) throw new Error("Accepted move did not advance the authoritative turn");
   if (incoming.damage <= 0 || incoming.hp >= 150 || incoming.turn !== move.turn) throw new Error("Server did not apply attack damage and synchronize the next turn");
+  firstSocket.send({ type: "move", data: { from, to, seq: 2 } });
+  const rapidRepeat = await firstSocket.next(m => m.type === "move_rejected");
+  if (rapidRepeat.reason !== "not_your_turn") throw new Error("A player was allowed a second move before the opponent turn");
   const [nextFrom,nextTo] = firstLegalSwap((start1.turn === "p1" ? start2 : start1).board);
   secondSocket.send({type:"move",data:{from:nextFrom,to:nextTo,seq:1}});
   const secondMove = await secondSocket.next(m=>m.type==="move_result");
