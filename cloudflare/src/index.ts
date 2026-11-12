@@ -282,7 +282,13 @@ export class MatchRoom extends DurableObject<Env> {
       rival.hp = Math.max(0, rival.hp - damage);
       if (stunMs) rival.stunnedUntil = 0;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
-      else game.turn = stunMs ? player : rivalId;
+      else if (stunMs > 0) {
+        // A slam skips the rival's next turn; the attacker acts again only because that turn was forfeited.
+        game.turn = player;
+      } else {
+        // Every accepted non-stun move passes the turn, regardless of speed or chain count.
+        game.turn = rivalId;
+      }
       await this.ctx.storage.put("match", game);
       socket.send(JSON.stringify({ type: "move_result", seq, board: own.board, rage: own.rage, attacks: result.attacks, hp: own.hp, opponentHp: rival.hp, chains: result.chains, status: game.status, turn: game.turn }));
       this.sendToPlayer(rivalId, { type: "incoming_attack", player, attacks: result.attacks, damage, hp: rival.hp, opponentHp: own.hp, stunMs, status: game.status, turn: game.turn });
@@ -311,7 +317,10 @@ export class MatchRoom extends DurableObject<Env> {
       own.rage = 0; own.lastMoveAt = now; rival.hp = Math.max(0, rival.hp - 46);
       rival.stunnedUntil = 0;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
-      else game.turn = player;
+      else {
+        // This special is a slam, so the rival forfeits exactly their next turn.
+        game.turn = player;
+      }
       await this.ctx.storage.put("match", game);
       socket.send(JSON.stringify({ type: "special_result", kind: "slam", damage: 46, rage: own.rage, hp: own.hp, opponentHp: rival.hp, status: game.status, turn: game.turn }));
       this.sendToPlayer(rivalId, {
