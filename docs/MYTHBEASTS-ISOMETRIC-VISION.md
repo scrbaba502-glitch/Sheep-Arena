@@ -80,3 +80,25 @@ Do not imply online multiplayer is implemented until it is actually built, teste
 6. Validate on Android before expanding the roster, arenas, story or multiplayer.
 
 **Acceptance principle:** A feature is not complete merely because it renders. It must support the intended game vision, feel good on a phone, remain readable during combat and pass the relevant checks.
+
+## 8. Touch-control reference and interaction direction
+
+The supplied reference is a **mobile HUD layout/customization screen** from a competitive mobile game. Use it as interaction inspiration, not as an art or UI template to copy.
+
+MYTHBEASTS CLASH control principles:
+- **Left thumb zone:** a floating or fixed virtual analog joystick with a clear base, responsive thumb knob and full 360-degree movement. The joystick should support walk/run modulation and optional sprint behavior without requiring separate directional buttons.
+- **Right thumb zone:** a compact, thumb-reachable combat cluster with primary attack as the easiest action to reach; dodge, champion skill and ultimate are distinct secondary actions. Do not add vehicle, parachute, inventory or shooter-specific controls that do not belong to this game.
+- **Context actions:** interact / pickup / revive / finisher prompts appear only when relevant, near but not on top of the primary combat cluster.
+- **HUD hierarchy:** health and resource information remain near the top; cooldown and ability states are visually clear; the battlefield center stays as unobstructed as possible.
+- **Multi-touch:** movement must continue while an attack, dodge or skill is pressed. Each pointer has independent ownership and is safely released on pointer-up, cancel, lost capture, app backgrounding and window blur.
+- **Ergonomics:** controls respect Android safe areas, adapt to portrait/landscape and different screen sizes, use generous touch targets and avoid accidental overlap with system gestures.
+- **Customization target:** later provide a dedicated HUD editor with drag-to-reposition, size and opacity adjustment, reset and save layout. Do not implement persistence until the control layout has been validated on device.
+- **Feedback:** buttons show pressed state, cooldown, unavailable state and ability readiness. Haptics may be considered only where supported and user-controlled.
+
+Initial implementation order:
+1. Replace the four directional buttons with a virtual analog joystick.
+2. Reposition and size the combat action cluster for comfortable right-thumb reach.
+3. Validate simultaneous movement + attack/dodge/skill on Android.
+4. Add a layout editor only after the base arrangement is proven comfortable.
+
+The reference is inspiration for **control ergonomics and player customization**, not a request to reproduce another game's exact HUD.
