@@ -87,6 +87,19 @@ h1{margin:0;font-family:Cinzel,Georgia,serif;font-size:34px;letter-spacing:3px;l
 .r .hp i{background:linear-gradient(#fff5,#fff0 55%,#0004),linear-gradient(#ff8a7d,#c0261b)}
 button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* BEASTRYX champion select */
+#ov .bx-select{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:min(100%,560px);margin:18px auto 14px;text-align:left}
+#ov .bx-card{border:1px solid #80632d;background:linear-gradient(145deg,#211713,#100d12);border-radius:13px;padding:12px 10px;color:#fff;text-align:left;min-height:92px;cursor:pointer;transition:border-color .15s,transform .15s}
+#ov .bx-card.on{border:2px solid #f4c76a;background:linear-gradient(145deg,#3a2914,#17101a);box-shadow:0 0 18px #e5ad4938}
+#ov .bx-card:focus-visible{outline:2px solid #fff2b0;outline-offset:3px}
+#ov .bx-card .bx-emoji{font-size:25px;display:block;margin-bottom:5px}
+#ov .bx-card b{display:block;font-size:13px;letter-spacing:.4px}
+#ov .bx-card small{display:block;color:#d4b879;font-size:10px;margin-top:4px}
+#ov .bx-card.locked{opacity:.65;border-style:dashed;cursor:default}
+#ov .bx-section{grid-column:1/-1;color:#f4d38a;font-size:10px;font-weight:900;letter-spacing:2px;margin:5px 2px 0}
+#ov .bx-foot{font-size:11px;color:#c7bca9;margin:0 auto 12px;max-width:440px}
+@media(min-width:600px){#ov .bx-select{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style></head><body>
 <div id="app">
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
@@ -151,7 +164,7 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
  if(n>=5){if(L>=3){k="slam";d=42}else if(L>=2){k="rifle";d=20}else d=18}else if(n==4){if(L>=2){k="rifle";d=18}else d=13}
  rage=Math.min(100,rage+(chain>1?3:n>=5?16:n==4?10:6));ui();const cr=Math.random()<Math.min(.25,.06+.01*L);if(cr)tx.push({s:"CRITICAL!",x:W*.69,y:H*.25,l:1,c:"#ff5a4a"});act(k,"p",Math.round(d*m*(cr?1.8:1)))}
 /* ---------- fight logic ---------- */
-function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
+function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh],fighterId:selectedFighterId};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
 function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
 function act(k,who,dmg){if(NET&&who==="p"&&room&&typeof room.move!=="function"&&!over)room.emit("atk",{k,d:dmg}).catch(()=>{});pend++;Q=Q.then(()=>new Promise(res=>{if(over){res();return}A={k,who,dmg,t:0,d:{punch:700,rifle:1000,slam:2800}[k],imp:{punch:.45,rifle:.62,slam:.78}[k],hit:0,ko:0,res}})).then(()=>{pend--});return Q}
@@ -434,8 +447,35 @@ function loop(n){requestAnimationFrame(loop);let dt=Math.min(.05,(n-last)/1000);
  try{render(dt)}catch(e){console.error(e)}}
 const day=new Date().toDateString();let streak=ls("a2k",0),dmsg="";if(ls("a2d","")!=day){streak=ls("a2d","")==new Date(Date.now()-864e5).toDateString()?streak+1:1;const r=10*Math.min(streak,7);coins+=r;sv("a2d",day);sv("a2k",streak);sv("a2c",coins);dmsg=" 🎁 Daily reward +"+r+" 🪙 · "+streak+"-day streak!"}
 $("b4").textContent=mute?"🔇":"🔊";fit();initBoard();ui();requestAnimationFrame(loop);
+
+let selectedFighterId=ls("bx.fighter", "flock-baa-rbarian");
+function chooseFighter(){
+ const roster=window.BEASTRYX_FIGHTERS||[];
+ if(!roster.length){setup();return}
+ if(!roster.some(f=>f.id===selectedFighterId))selectedFighterId=roster[0].id;
+ ov("<div class=\"bx-mark\">⚔️</div><h1>CHOOSE YOUR CHAMPION</h1>","THE FLOCK · FOUNDING ROSTER","Every founding sheep champion begins with equal baseline stats. Choose your fighter; their signature identity will shape future abilities and evolutions.","ENTER THE ARENA",setup,o=>{
+  const grid=document.createElement("div");grid.className="bx-select";
+  const heading=document.createElement("div");heading.className="bx-section";heading.textContent="PLAYABLE NOW · SHEEP CHAMPIONS";grid.appendChild(heading);
+  const glyphs=["🐏","🐑","🐏","👑","🦇","🛡️","🎖️","🌙"];
+  roster.forEach((fighter,i)=>{
+   const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
+   card.innerHTML='<span class="bx-emoji">'+glyphs[i%glyphs.length]+'</span><b></b><small></small>';
+   card.querySelector("b").textContent=fighter.name;
+   card.querySelector("small").textContent=fighter.role+" · "+fighter.species;
+   card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
+   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
+   grid.appendChild(card);
+  });
+  const coming=document.createElement("div");coming.className="bx-section";coming.textContent="NEW SPECIES · IN DEVELOPMENT";grid.appendChild(coming);
+  [["👤","HUMAN","Tactical fighters"],["🐉","BEAST","Primal power"],["🧙","MYTHIC","Ancient legends"],["🤖","CYBER","Future technology"]].forEach(item=>{
+   const card=document.createElement("div");card.className="bx-card locked";card.innerHTML='<span class="bx-emoji">'+item[0]+'</span><b>'+item[1]+'</b><small>'+item[2]+' · COMING SOON</small>';grid.appendChild(card);
+  });
+  const foot=document.createElement("div");foot.className="bx-foot";foot.textContent="More species and champions will unlock as the BEASTRYX universe expands.";o.insertBefore(grid,o.querySelector("[data-m]"));o.insertBefore(foot,o.querySelector("[data-m]"));
+ });
+}
+
 function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));wardrobe(o);o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
-function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>EVERY SPECIES · ONE ARENA</small><h1>BEASTRYX ARENA</h1>`,"MATCH-3 COMBAT · INFINITE POWER","Match stones to land blows: 3 = punch, 4 = rifle, then the blazing chokeslam. Beat each rival to level up and unlock new moves and outfits."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
+function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>EVERY SPECIES · ONE ARENA</small><h1>BEASTRYX ARENA</h1>`,"MATCH-3 COMBAT · INFINITE POWER","Match stones to land blows: 3 = punch, 4 = rifle, then the blazing chokeslam. Beat each rival to level up and unlock new moves and outfits."+dmsg,L>1?"CONTINUE · LEVEL "+L:"CHOOSE YOUR CHAMPION",chooseFighter,homeEx);}
 home();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(function(){});
 function hashJoin(){const c=parseCode(location.hash.slice(1));if(!c||room||NET)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}duelMenu(c)}
