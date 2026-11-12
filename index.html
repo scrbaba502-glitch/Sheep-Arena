@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>A² Sheep Arena</title>
+<title>BEASTRYX ARENA</title>
 <script>(function(){var u=["peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js","https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"],i=0;function n(){if(window.Peer||i>=u.length)return;var t=document.createElement("script");t.src=u[i++];t.onload=function(){if(!window.Peer)n()};t.onerror=n;document.head.appendChild(t)}n()})()</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="description" content="A² Sheep Arena: volcano wrestling meets match-3. Duel friends online with a 4-letter code.">
+<meta name="description" content="BEASTRYX ARENA: every species, one arena, infinite power. Match-3 combat and online duels.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a0a10">
@@ -100,10 +100,11 @@ button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:
 <div id="ov"></div>
 <script>window.A2_SHEEP_ARENA_API = "https://sheep-arena.scrbaba502.workers.dev";</script>
 <script src="cloudflare-client.js"></script>
+<script src="fighters.js"></script>
 <script>
 const $=id=>document.getElementById(id),N=7,sleep=ms=>new Promise(r=>setTimeout(r,ms)),hash=n=>{const x=Math.sin(n*127.1)*43758.5;return x-Math.floor(x)};
 const COL=["#ff3b4e","#ffb020","#22c55e","#3b82f6","#a855f7"],SH=["circle(50% at 50% 50%)","polygon(50% 0,100% 50%,50% 100%,0 50%)","inset(6% round 22%)","polygon(50% 4%,98% 92%,2% 92%)","polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)"];
-const HAT=["","🕶️","🤠","🎩","🎧","👑","🦸","🔥"],ENM=["Baa-rbarian","Wool Vader","Ram-bo","Lord Fleece","Baa-tman","Sir Wool-ot","Captain Mutton","Count Ewe-la"];
+const HAT=["","🕶️","🤠","🎩","🎧","👑","🦸","🔥"],FIGHTERS=window.BEASTRYX_FIGHTERS||[],ENM=FIGHTERS.length?FIGHTERS.map(f=>f.name):["Baa-rbarian","Wool Vader","Ram-bo","Lord Fleece","Baa-tman","Sir Wool-ot","Captain Mutton","Count Ewe-la"];
 const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let L=ls("a2lvl",1),coins=ls("a2c",0),ST=ls("a2s",{}),hatSel=ls("a2h",-1),mute=ls("a2m",0);
 const TR=[{hp:1,iv:1,t:"BRAWLER"},{hp:1.5,iv:1.1,t:"TANK"},{hp:.9,iv:.7,t:"SPEEDSTER"},{hp:1,iv:1,r:.7,t:"SNIPER"}];
@@ -265,7 +266,7 @@ function cloudLobby(code){
  const C=code.toUpperCase();
  ov('<small>ROOM</small><div class="code">'+[...C].map(x=>"<b>"+x+"</b>").join("")+'</div>',"WAITING FOR YOUR RIVAL","Cloudflare room ready. Share the invite link; the match starts when your rival joins.","CANCEL",leaveRoom,o=>{
   const bt=o.querySelector("button"),inv=mkb("✉️ INVITE FRIEND",async e=>{const el=e.currentTarget,u=link(C);
-   try{if(navigator.share){await navigator.share({title:"A² Sheep Arena",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
+   try{if(navigator.share){await navigator.share({title:"BEASTRYX ARENA",text:"Fight me in A² Sheep Arena! Room "+C,url:u});return}}catch(x){if(x&&x.name=="AbortError")return}
    try{await navigator.clipboard.writeText(u);el.textContent="✓ LINK COPIED"}catch(x){el.textContent="CODE · "+C}},"btn");
   o.insertBefore(inv,bt);bt.className="btn ghost"
  });
@@ -402,7 +403,7 @@ function render(dt){X.save();flash=Math.max(0,flash-dt*2.2);const z=A&&A.k=="sla
  const bl=W*.12,br=W*.88,bt=H*.52,fl=W*.02,fr=W*.98,fb=H*.8,hb=H*.14,hf=H*.2;
  rope(bl,bt,br,bt,hb);
  X.fillStyle="#1a0d0a";X.beginPath();X.moveTo(fl,fb);X.lineTo(fr,fb);X.lineTo(fr,H*.9);X.lineTo(fl,H*.9);X.fill();X.fillStyle="#c28a24";X.fillRect(fl,fb,fr-fl,3);
- X.fillStyle="rgba(243,210,122,.7)";X.font="900 "+H*.05+"px Cinzel,Georgia,serif";X.textAlign="center";X.fillText("A²  SHEEP ARENA",W/2,H*.865);
+ X.fillStyle="rgba(243,210,122,.7)";X.font="900 "+H*.05+"px Cinzel,Georgia,serif";X.textAlign="center";X.fillText("BEASTRYX ARENA",W/2,H*.865);
  g=X.createLinearGradient(0,H*.9,0,H);g.addColorStop(0,"#ff7a12");g.addColorStop(1,"#8a1604");X.fillStyle=g;X.fillRect(0,H*.9,W,H*.1);X.globalCompositeOperation="lighter";X.strokeStyle="rgba(255,220,120,.5)";X.lineWidth=2;for(let i=0;i<8;i++){const x=(i*W/7+T*.02*(i%2?1:-1)+W)%W;X.beginPath();X.arc(x,H*.95,8+Math.sin(T*.004+i)*3,0,3.14);X.stroke()}X.globalCompositeOperation="source-over";
  g=X.createLinearGradient(0,bt,0,fb);g.addColorStop(0,"#1b2a66");g.addColorStop(1,"#2a3f95");X.fillStyle=g;X.beginPath();X.moveTo(bl,bt);X.lineTo(br,bt);X.lineTo(fr,fb);X.lineTo(fl,fb);X.fill();X.strokeStyle="#c28a24";X.lineWidth=3;X.stroke();
  X.save();X.clip();X.fillStyle="rgba(255,255,255,.05)";for(let i=-10;i<24;i++){X.beginPath();X.moveTo(i*W/12,bt);X.lineTo(i*W/12+W/24,bt);X.lineTo(i*W/12+W/24-W*.1,fb);X.lineTo(i*W/12-W*.1,fb);X.fill()}
@@ -434,7 +435,7 @@ function loop(n){requestAnimationFrame(loop);let dt=Math.min(.05,(n-last)/1000);
 const day=new Date().toDateString();let streak=ls("a2k",0),dmsg="";if(ls("a2d","")!=day){streak=ls("a2d","")==new Date(Date.now()-864e5).toDateString()?streak+1:1;const r=10*Math.min(streak,7);coins+=r;sv("a2d",day);sv("a2k",streak);sv("a2c",coins);dmsg=" 🎁 Daily reward +"+r+" 🪙 · "+streak+"-day streak!"}
 $("b4").textContent=mute?"🔇":"🔊";fit();initBoard();ui();requestAnimationFrame(loop);
 function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));wardrobe(o);o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
-function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>SHEEP ARENA</h1>`,"VOLCANO WRESTLING · MATCH-3","Match stones to land blows: 3 = punch, 4 = rifle, then the blazing chokeslam. Beat each rival to level up and unlock new moves and outfits."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
+function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>EVERY SPECIES · ONE ARENA</small><h1>BEASTRYX ARENA</h1>`,"MATCH-3 COMBAT · INFINITE POWER","Match stones to land blows: 3 = punch, 4 = rifle, then the blazing chokeslam. Beat each rival to level up and unlock new moves and outfits."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
 home();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(function(){});
 function hashJoin(){const c=parseCode(location.hash.slice(1));if(!c||room||NET)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}duelMenu(c)}
