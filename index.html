@@ -101,6 +101,11 @@ button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:
 #ov .bx-foot{font-size:11px;color:#c7bca9;margin:0 auto 12px;max-width:440px}
 #ov .bx-card .bx-kit{display:block;color:#cfc3b0;font-size:9px;line-height:1.35;margin-top:6px;white-space:normal}
 @media(min-width:600px){#ov .bx-select{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+#ov .bx-profile{grid-column:1/-1;border:1px solid #a17a39;border-radius:15px;padding:14px;background:radial-gradient(circle at 85% 10%,#51351d88,transparent 45%),linear-gradient(145deg,#17131b,#09080d);box-shadow:inset 0 0 24px #d6a74b12;text-align:left;margin:4px 0 8px}
+#ov .bx-profile h2{font:900 19px Cinzel,Georgia,serif;color:#ffe2a0;margin:0 0 3px}#ov .bx-profile .ep{font-size:10px;letter-spacing:2px;color:#d8b66c;text-transform:uppercase}
+#ov .bx-profile p{font-size:11px;line-height:1.5;color:#d8d0c4;margin:8px 0}#ov .bx-profile .kitrow{font-size:10px;line-height:1.5;color:#f4e8cf;margin-top:5px}#ov .bx-profile .kitrow b{color:#f3c96d}
+#ov .bx-profile .statline{display:grid;grid-template-columns:54px 1fr 30px;gap:7px;align-items:center;font-size:9px;color:#cfc5b6;margin:5px 0}#ov .bx-profile .meter{height:5px;border-radius:9px;background:#ffffff18;overflow:hidden}#ov .bx-profile .meter i{display:block;height:100%;background:linear-gradient(90deg,#9b6b28,#ffe39a)}
 </style></head><body>
 <div id="app">
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
@@ -430,6 +435,23 @@ function pose(w){const o={dx:0,dy:0,rot:0,ext:0,gun:0,mf:0,fire:0,hide:0},cl=(v)
   else{const u=cl((t-.45)/.2),dn=t>.7;o.dx=-ad*(gap*.38-50*s)*u*(1-cl((t-.92)/.08));o.dy=-95*s*u*(dn?1-cl((t-.7)/.08):1);o.rot=ad*1.5*u*(A.ko||t<.92?1:1-cl((t-.92)/.08));
    if(A.ko&&t>.85){o.dy+=(t-.85)/.15*240;o.fire=1;if(t>.97)o.hide=1}}}
  return o}
+function drawFlockUltimateScene(id){
+ const c=X,elapsed=2600-(flockUltUntil-T),t=Math.max(0,Math.min(1,elapsed/2600)),fade=Math.min(1,t*5,(1-t)*5),styles={
+ "flock-baa-rbarian":["#ff792e","RAM BREAKER"],"flock-wool-vader":["#a77aff","DARK FLEECE"],
+ "flock-ram-bo":["#ff563b","ALPHA STAMPEDE"],"flock-lord-fleece":["#f4d47b","CROWN BREAKER"],
+ "flock-baa-tman":["#a69aff","MIDNIGHT IMPACT"],"flock-sir-woolot":["#7bdcff","HONOUR-BOUND"],
+ "flock-captain-mutton":["#79e6ff","METEOR VOLLEY"],"flock-count-ewe-la":["#a5efff","ECLIPSE CRASH"]};
+ const v=styles[id];if(!v)return;
+ c.save();c.globalCompositeOperation="lighter";c.globalAlpha=.22*fade;c.fillStyle=v[0];c.fillRect(0,0,W,H);
+ const cx=W/2,cy=H*.43,r=(30+t*W*.42)*s;c.globalAlpha=.85*fade;c.strokeStyle=v[0];c.lineWidth=(3+4*(1-t))*s;
+ for(let j=0;j<3;j++){c.beginPath();c.ellipse(cx,cy,r*(.7+j*.22),r*(.35+j*.1),t*2+j,0,Math.PI*2);c.stroke()}
+ c.globalAlpha=.65*fade;c.fillStyle=v[0];
+ if(id==="flock-captain-mutton"){for(let j=0;j<7;j++){const x=cx+(j-3)*W*.12,y=cy+Math.sin(t*8+j)*H*.1;c.beginPath();c.moveTo(x,y-28*s);c.lineTo(x-9*s,y);c.lineTo(x+9*s,y);c.fill()}}
+ else if(id==="flock-lord-fleece"){c.beginPath();c.moveTo(cx-W*.2,cy);c.lineTo(cx-W*.16,cy-48*s);c.lineTo(cx-W*.06,cy-20*s);c.lineTo(cx,cy-62*s);c.lineTo(cx+W*.06,cy-20*s);c.lineTo(cx+W*.16,cy-48*s);c.lineTo(cx+W*.2,cy);c.closePath();c.stroke()}
+ else if(id==="flock-wool-vader"||id==="flock-count-ewe-la"){for(let j=0;j<12;j++){const a=j*Math.PI/6+t*4;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);c.stroke()}}
+ else {for(let j=0;j<5;j++){const a=t*8+j*Math.PI*2/5;c.beginPath();c.arc(cx+Math.cos(a)*r*.55,cy+Math.sin(a)*r*.3,10*s+8*s*Math.sin(t*10+j),0,7);c.fill()}}
+ c.globalAlpha=fade;c.textAlign="center";c.font="900 "+Math.max(13,H*.035)+"px Cinzel,Georgia,serif";c.lineWidth=4;c.strokeStyle="#120b10";c.strokeText(v[1],cx,H*.19);c.fillStyle="#fff0bd";c.fillText(v[1],cx,H*.19);c.restore();
+}
 function drawSheepActionFX(x,y,id,t,ultimate){
  const c=X,p=t* Math.PI*2,alpha=Math.sin(Math.PI*Math.max(0,Math.min(1,t)));
  const styles={
@@ -539,6 +561,7 @@ function render(dt){X.save();flash=Math.max(0,flash-dt*2.2);const z=A&&A.k=="sla
   X.fillStyle="rgba(0,0,0,.35)";X.beginPath();X.ellipse(x,fy+6,34*s,8*s,0,0,7);X.fill();
   if(p.fire&&Math.random()<.8)ps.push({x:x+(Math.random()-.5)*50*s,y:y-30*s,vx:(Math.random()-.5)*40,vy:-90-Math.random()*90,l:.6,m:.6,c:"255,"+(100+Math.random()*110|0)+",30",r:5*s});
   const activeFighter=me?FIGHTERS.find(f=>f.id===selectedFighterId):null;if(me&&activeFighter&&activeFighter.faction==="Flock"&&T<flockFxUntil)drawSheepFX(x,y,activeFighter.id,T<flockUltUntil);if(me&&activeFighter&&activeFighter.faction==="Flock"&&A&&A.who==="p"&&A.fighterId===activeFighter.id)drawSheepActionFX(x,y,activeFighter.id,A.t/A.d,A.k==="slam");if(me&&activeFighter&&activeFighter.visual.renderer==="human")human(x,y,1,p,activeFighter);else sheep(x,y,me?1:-1,p,o.hat,me?"#e2b043":"#7a1b1b",me?"#d9302c":"#2b6cff");if(w=="e"?E.stun>0:pst>0){for(let k=0;k<3;k++){const a=T*.008+k*2.1;X.font=20*s+"px serif";X.textAlign="center";X.fillText("💫",x+Math.cos(a)*22*s,y-96*s+Math.sin(a)*6*s)}}}
+ if(T<flockUltUntil&&flockUltId)drawFlockUltimateScene(flockUltId);
  if(A&&A.k=="rifle"){const t=A.t/A.d,ad=A.who=="p"?1:-1,ax=(A.who=="p"?px:ex)+ad*80*s,tx2=(A.who=="p"?ex:px);for(let b=0;b<3;b++){const u=(t-.3-b*.06)/.22;if(u>0&&u<1){const bx=ax+(tx2-ax)*u;X.strokeStyle="#ffe066";X.lineWidth=3;X.beginPath();X.moveTo(bx-ad*22,fy-36*s);X.lineTo(bx,fy-36*s);X.stroke()}}}
  rope(fl,fb,fr,fb,hf);post(fl,fb,hf,4);post(fr,fb,hf,4);
  X.globalCompositeOperation="lighter";for(let i=ps.length-1;i>=0;i--){const q=ps[i];q.l-=dt;if(q.l<=0){ps.splice(i,1);continue}q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=(q.c.startsWith("255,1")?0:500)*dt;X.fillStyle="rgba("+q.c+","+q.l/q.m+")";X.beginPath();X.arc(q.x,q.y,q.r,0,7);X.fill()}X.globalCompositeOperation="source-over";
@@ -567,6 +590,28 @@ function chooseFighter(){
  ov("<div class=\"bx-mark\">⚔️</div><h1>CHOOSE YOUR CHAMPION</h1>","THE FLOCK · FOUNDING ROSTER","Every founding sheep champion begins with equal baseline stats. Choose your fighter; their signature identity will shape future abilities and evolutions.","ENTER THE ARENA",setup,o=>{
   const grid=document.createElement("div");grid.className="bx-select";
   const heading=document.createElement("div");heading.className="bx-section";heading.textContent="PLAYABLE NOW · FOUNDING FLOCK";grid.appendChild(heading);
+  const profile=document.createElement("section");profile.className="bx-profile";profile.setAttribute("aria-live","polite");grid.appendChild(profile);
+  const lore={
+   "flock-baa-rbarian":"A frontline breaker who turns every collision into a declaration of war.",
+   "flock-wool-vader":"A quiet master of the void who controls the rhythm of every encounter.",
+   "flock-ram-bo":"A relentless combatant whose momentum becomes an unstoppable stampede.",
+   "flock-lord-fleece":"A royal guardian whose resolve protects the flock when hope is fading.",
+   "flock-baa-tman":"A nocturnal tactician who wins through misdirection, timing and precision.",
+   "flock-sir-woolot":"An oathbound defender who turns every block into a counterattack.",
+   "flock-captain-mutton":"A fearless ranger who controls the arena from impossible distance.",
+   "flock-count-ewe-la":"A lunar disruptor who bends the battlefield beneath an eclipse."
+  };
+  function refreshProfile(f){
+   const d=f.abilityDetails||{},stats=f.stats||{health:100,power:100,defense:100,speed:100};
+   const loreText=lore[f.id]||((f.elementTitle||"A rising champion")+" — a "+f.role.toLowerCase()+" whose power is shaped by "+(f.element||"unyielding determination")+".");
+   profile.innerHTML="";
+   const h=document.createElement("h2");h.textContent=f.name;profile.appendChild(h);
+   const ep=document.createElement("div");ep.className="ep";ep.textContent=(f.tier||f.faction)+" · "+(f.element||"Flock")+" · "+f.role;profile.appendChild(ep);
+   const p=document.createElement("p");p.textContent=loreText;profile.appendChild(p);
+   [["PASSIVE",d.passive||f.abilities.passive],["SIGNATURE",d.signature||f.abilities.signature],["ULTIMATE",d.ultimate||f.abilities.ultimate]].forEach(([label,value])=>{const row=document.createElement("div");row.className="kitrow";const b=document.createElement("b");b.textContent=label+" · ";row.appendChild(b);row.appendChild(document.createTextNode(value));profile.appendChild(row)});
+   const cap=document.createElement("div");cap.className="ep";cap.style.marginTop="10px";cap.textContent="BASELINE ATTRIBUTES · EQUAL ROSTER BALANCE";profile.appendChild(cap);
+   ["health","power","defense","speed"].forEach(k=>{const row=document.createElement("div");row.className="statline";const name=document.createElement("span");name.textContent=k.toUpperCase();const meter=document.createElement("span");meter.className="meter";const fill=document.createElement("i");fill.style.width=Math.max(0,Math.min(100,Number(stats[k])||100))+"%";meter.appendChild(fill);const val=document.createElement("b");val.textContent=String(stats[k]||100);row.append(name,meter,val);profile.appendChild(row)});
+  }
   const glyphs=["🐏","🐑","🐏","👑","🦇","🛡️","🎖️","🌙"];
   roster.forEach((fighter,i)=>{
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
@@ -575,7 +620,8 @@ function chooseFighter(){
    card.querySelector("small").textContent=(fighter.element||"FOUNDING FLOCK")+" · "+fighter.role;
    const kit=card.querySelector(".bx-kit");const details=fighter.abilityDetails||{};kit.textContent="PASSIVE · "+(details.passive||fighter.abilities.passive)+" | SIGNATURE · "+(details.signature||fighter.abilities.signature)+" | ULTIMATE · "+(details.ultimate||fighter.abilities.ultimate);
    card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
-   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
+   if(fighter.id===selectedFighterId)refreshProfile(fighter);
+   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true");refreshProfile(fighter)};
    grid.appendChild(card);
   });
   const humanHeading=document.createElement("div");humanHeading.className="bx-section";humanHeading.textContent="THE SIX ELEMENTAL SOVEREIGNS · HUMAN DYNASTY";grid.appendChild(humanHeading);
@@ -584,7 +630,8 @@ function chooseFighter(){
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
    card.innerHTML='<span class="bx-emoji">'+humanGlyphs[i]+'</span><b></b><small></small>';card.querySelector("b").textContent=fighter.name;card.querySelector("small").textContent=fighter.role+" · "+fighter.species;
    card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
-   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
+   if(fighter.id===selectedFighterId)refreshProfile(fighter);
+   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true");refreshProfile(fighter)};
    grid.appendChild(card);
   });
   const coming=document.createElement("div");coming.className="bx-section";coming.textContent="OTHER SPECIES · IN DEVELOPMENT";grid.appendChild(coming);
