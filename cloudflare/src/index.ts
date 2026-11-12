@@ -405,7 +405,7 @@ export class MatchRoom extends DurableObject<Env> {
     }
     const seeds = crypto.getRandomValues(new Uint32Array(2));
     const match: MatchState = {
-      status: "active", turn: seeds[0] % 2 === 0 ? "p1" : "p2", startedAt: Date.now(),
+      status: "active", turn: "p1", startedAt: Date.now(),
       players: {
         p1: { board: createBoard(seeds[0]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0, stunnedUntil: 0 },
         p2: { board: createBoard(seeds[1]), hp: 150, rage: 0, seq: 0, lastMoveAt: 0, stunnedUntil: 0 }
