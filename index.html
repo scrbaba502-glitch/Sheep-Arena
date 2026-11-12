@@ -402,6 +402,20 @@ function sheep(x,y,f,p,hat,belt,glove){const c=X,bob=Math.sin(T*.005+f)*1.6;c.sa
   if(p.mf){c.fillStyle="#ffe066";c.beginPath();c.moveTo(78,-38);c.lineTo(104,-50);c.lineTo(97,-38);c.lineTo(104,-26);c.fill()}}
  else{const g=c.createRadialGradient(29+ex,-38,2,32+ex,-34,14);g.addColorStop(0,"#fff");g.addColorStop(.25,glove);g.addColorStop(1,"#000");c.fillStyle=g;c.beginPath();c.arc(32+ex,-34,13,0,7);c.fill();c.fillStyle="#f6f1e8";c.fillRect(17+ex,-40,6,12)}
  c.restore()}
+function human(x,y,f,p,fighter){const c=X,v=fighter&&fighter.visual||{},primary=v.primary||"#53616a",secondary=v.secondary||"#20272d",accent=v.accent||"#e2b66b",arch=v.archetype||"commander";c.save();c.translate(x,y+Math.sin(T*.005+f)*1.4*s);c.rotate(p.rot);c.scale(f*s,s);
+ const glow=c.createRadialGradient(0,-55,2,0,-55,70);glow.addColorStop(0,arch==="shadow-mage"?"rgba(142,105,255,.45)":"rgba(255,210,120,.2)");glow.addColorStop(1,"rgba(0,0,0,0)");c.fillStyle=glow;c.fillRect(-75,-135,150,150);
+ c.fillStyle="#11131b";c.fillRect(-18,-28,13,28);c.fillRect(5,-28,13,28);c.fillStyle=secondary;c.fillRect(-21,-7,17,7);c.fillRect(4,-7,18,7);
+ c.fillStyle=primary;c.beginPath();c.moveTo(-24,-88);c.lineTo(23,-88);c.lineTo(31,-30);c.lineTo(-31,-30);c.closePath();c.fill();
+ c.fillStyle=secondary;c.beginPath();c.moveTo(-23,-83);c.lineTo(-43,-38);c.lineTo(-28,-31);c.lineTo(-12,-70);c.fill();c.beginPath();c.moveTo(23,-83);c.lineTo(43,-38);c.lineTo(28,-31);c.lineTo(12,-70);c.fill();
+ c.fillStyle=accent;c.fillRect(-22,-84,44,5);c.fillRect(-5,-82,10,42);
+ c.fillStyle="#b87954";c.beginPath();c.arc(0,-101,17,0,Math.PI*2);c.fill();
+ c.fillStyle=arch==="shadow-mage"?"#111020":"#171923";c.beginPath();c.arc(0,-108,18,Math.PI,Math.PI*2);c.fill();c.fillRect(-17,-108,34,7);
+ c.fillStyle="#f0d5bd";c.fillRect(-8,-103,3,2);c.fillRect(6,-103,3,2);
+ if(arch==="shadow-mage"){c.fillStyle="#171126";c.beginPath();c.moveTo(-19,-112);c.lineTo(0,-145);c.lineTo(19,-112);c.closePath();c.fill();c.strokeStyle=accent;c.lineWidth=2;c.beginPath();c.arc(0,-98,27,0,Math.PI*2);c.stroke();c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.moveTo(34,-25);c.lineTo(39,-120);c.stroke();c.fillStyle=accent;c.shadowColor=accent;c.shadowBlur=16;c.beginPath();c.arc(39,-126,9,0,Math.PI*2);c.fill();c.shadowBlur=0;if(p.fire){c.globalCompositeOperation="lighter";c.fillStyle="rgba(142,105,255,.5)";c.beginPath();c.arc(0,-70,40+Math.sin(T*.02)*5,0,Math.PI*2);c.fill();c.globalCompositeOperation="source-over"}}
+ else if(arch==="commander"){c.fillStyle=accent;c.fillRect(-19,-121,38,6);c.fillRect(-12,-128,24,7);c.fillStyle=secondary;c.fillRect(25,-75,8,45);c.fillStyle=accent;c.fillRect(23,-81,12,8)}
+ else if(arch==="duelist"){c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.moveTo(28,-40);c.lineTo(62,-105);c.stroke();c.fillStyle=accent;c.fillRect(58,-111,5,18)}
+ else{c.fillStyle=accent;c.fillRect(-29,-90,9,52);c.fillRect(20,-90,9,52);c.fillStyle=secondary;c.beginPath();c.arc(0,-105,22,Math.PI,0);c.fill()}
+ if(p.ext){c.strokeStyle=accent;c.lineWidth=9;c.beginPath();c.moveTo(20,-64);c.lineTo(34+p.ext*35,-42);c.stroke()}c.restore()}
 function rope(x1,y1,x2,y2,h){["#c4272b","#f2efe6","#c4272b"].forEach((col,i)=>{const o=h*(.4+i*.3);X.lineCap="round";X.strokeStyle="rgba(0,0,0,.55)";X.lineWidth=5;X.beginPath();X.moveTo(x1,y1-o+2);X.lineTo(x2,y2-o+2);X.stroke();X.strokeStyle=col;X.lineWidth=3.5;X.beginPath();X.moveTo(x1,y1-o);X.lineTo(x2,y2-o);X.stroke();X.strokeStyle="rgba(255,255,255,.45)";X.lineWidth=1;X.beginPath();X.moveTo(x1,y1-o-1);X.lineTo(x2,y2-o-1);X.stroke()})}
 function post(x,y,h,w){const g=X.createLinearGradient(x-w,0,x+w,0);g.addColorStop(0,"#7a5a22");g.addColorStop(.5,"#ffe9a8");g.addColorStop(1,"#7a5a22");X.fillStyle=g;X.fillRect(x-w,y-h*1.05,w*2,h*1.05);for(const k of[.4,.7,1]){X.fillStyle="#c4272b";X.fillRect(x-w-2,y-h*k-5,w*2+4,10)}}
 function render(dt){X.save();flash=Math.max(0,flash-dt*2.2);const z=A&&A.k=="slam"?1+.14*Math.sin(Math.PI*Math.min(1,A.t/A.d)):1;X.translate(W/2,H*.62);X.scale(z,z);X.translate(-W/2,-H*.62);cheer=Math.max(0,cheer-dt);if(shake>.3){X.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.88}
@@ -428,7 +442,7 @@ function render(dt){X.save();flash=Math.max(0,flash-dt*2.2);const z=A&&A.k=="sla
  for(const w of["p","e"]){const p=pose(w);if(p.hide)continue;const me=w=="p",o=me?P:E,x=(me?px:ex)+p.dx,y=fy+p.dy;
   X.fillStyle="rgba(0,0,0,.35)";X.beginPath();X.ellipse(x,fy+6,34*s,8*s,0,0,7);X.fill();
   if(p.fire&&Math.random()<.8)ps.push({x:x+(Math.random()-.5)*50*s,y:y-30*s,vx:(Math.random()-.5)*40,vy:-90-Math.random()*90,l:.6,m:.6,c:"255,"+(100+Math.random()*110|0)+",30",r:5*s});
-  sheep(x,y,me?1:-1,p,o.hat,me?"#e2b043":"#7a1b1b",me?"#d9302c":"#2b6cff");if(w=="e"?E.stun>0:pst>0){for(let k=0;k<3;k++){const a=T*.008+k*2.1;X.font=20*s+"px serif";X.textAlign="center";X.fillText("💫",x+Math.cos(a)*22*s,y-96*s+Math.sin(a)*6*s)}}}
+  const activeFighter=me?FIGHTERS.find(f=>f.id===selectedFighterId):null;if(me&&activeFighter&&activeFighter.visual.renderer==="human")human(x,y,1,p,activeFighter);else sheep(x,y,me?1:-1,p,o.hat,me?"#e2b043":"#7a1b1b",me?"#d9302c":"#2b6cff");if(w=="e"?E.stun>0:pst>0){for(let k=0;k<3;k++){const a=T*.008+k*2.1;X.font=20*s+"px serif";X.textAlign="center";X.fillText("💫",x+Math.cos(a)*22*s,y-96*s+Math.sin(a)*6*s)}}}
  if(A&&A.k=="rifle"){const t=A.t/A.d,ad=A.who=="p"?1:-1,ax=(A.who=="p"?px:ex)+ad*80*s,tx2=(A.who=="p"?ex:px);for(let b=0;b<3;b++){const u=(t-.3-b*.06)/.22;if(u>0&&u<1){const bx=ax+(tx2-ax)*u;X.strokeStyle="#ffe066";X.lineWidth=3;X.beginPath();X.moveTo(bx-ad*22,fy-36*s);X.lineTo(bx,fy-36*s);X.stroke()}}}
  rope(fl,fb,fr,fb,hf);post(fl,fb,hf,4);post(fr,fb,hf,4);
  X.globalCompositeOperation="lighter";for(let i=ps.length-1;i>=0;i--){const q=ps[i];q.l-=dt;if(q.l<=0){ps.splice(i,1);continue}q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=(q.c.startsWith("255,1")?0:500)*dt;X.fillStyle="rgba("+q.c+","+q.l/q.m+")";X.beginPath();X.arc(q.x,q.y,q.r,0,7);X.fill()}X.globalCompositeOperation="source-over";
@@ -455,7 +469,7 @@ function chooseFighter(){
  if(!roster.some(f=>f.id===selectedFighterId))selectedFighterId=roster[0].id;
  ov("<div class=\"bx-mark\">⚔️</div><h1>CHOOSE YOUR CHAMPION</h1>","THE FLOCK · FOUNDING ROSTER","Every founding sheep champion begins with equal baseline stats. Choose your fighter; their signature identity will shape future abilities and evolutions.","ENTER THE ARENA",setup,o=>{
   const grid=document.createElement("div");grid.className="bx-select";
-  const heading=document.createElement("div");heading.className="bx-section";heading.textContent="PLAYABLE NOW · SHEEP CHAMPIONS";grid.appendChild(heading);
+  const heading=document.createElement("div");heading.className="bx-section";heading.textContent="PLAYABLE NOW · FOUNDING FLOCK";grid.appendChild(heading);
   const glyphs=["🐏","🐑","🐏","👑","🦇","🛡️","🎖️","🌙"];
   roster.forEach((fighter,i)=>{
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
@@ -466,8 +480,17 @@ function chooseFighter(){
    card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
    grid.appendChild(card);
   });
-  const coming=document.createElement("div");coming.className="bx-section";coming.textContent="NEW SPECIES · IN DEVELOPMENT";grid.appendChild(coming);
-  [["👤","HUMAN","Tactical fighters"],["🐉","BEAST","Primal power"],["🧙","MYTHIC","Ancient legends"],["🤖","CYBER","Future technology"]].forEach(item=>{
+  const humanHeading=document.createElement("div");humanHeading.className="bx-section";humanHeading.textContent="PLAYABLE NOW · HUMAN DYNASTY";grid.appendChild(humanHeading);
+  const humanGlyphs=["⚔️","🌑","🗡️","🛡️"];
+  roster.filter(f=>f.faction==="Human Dynasty").forEach((fighter,i)=>{
+   const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
+   card.innerHTML='<span class="bx-emoji">'+humanGlyphs[i]+'</span><b></b><small></small>';card.querySelector("b").textContent=fighter.name;card.querySelector("small").textContent=fighter.role+" · "+fighter.species;
+   card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
+   card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
+   grid.appendChild(card);
+  });
+  const coming=document.createElement("div");coming.className="bx-section";coming.textContent="OTHER SPECIES · IN DEVELOPMENT";grid.appendChild(coming);
+  [["🐉","BEAST","Primal power"],["🧙","MYTHIC","Ancient legends"],["🤖","CYBER","Future technology"]].forEach(item=>{
    const card=document.createElement("div");card.className="bx-card locked";card.innerHTML='<span class="bx-emoji">'+item[0]+'</span><b>'+item[1]+'</b><small>'+item[2]+' · COMING SOON</small>';grid.appendChild(card);
   });
   const foot=document.createElement("div");foot.className="bx-foot";foot.textContent="More species and champions will unlock as the BEASTRYX universe expands.";o.insertBefore(grid,o.querySelector("[data-m]"));o.insertBefore(foot,o.querySelector("[data-m]"));
