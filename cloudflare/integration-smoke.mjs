@@ -213,6 +213,8 @@ try {
   for (let attempt = 0; attempt < 40 && !finished; attempt++) {
     const activeRoom = nextTurn === client1.player ? client1 : client2;
     const opponentRoom = activeRoom === client1 ? client2 : client1;
+    // The Worker enforces a 120 ms per-player action interval.
+    await delay(130);
     const [from, to] = firstLegalSwap(boards[nextTurn]);
     const incomingPromise = new Promise(resolve => opponentRoom.on("incoming_attack", resolve));
     const [result, attack] = await withTimeout(Promise.all([
