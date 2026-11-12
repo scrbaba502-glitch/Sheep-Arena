@@ -49,6 +49,8 @@ h1{margin:0;font-family:Cinzel,Georgia,serif;font-size:34px;letter-spacing:3px;l
 .tm::after,.rg::after{position:absolute;inset:0;font:800 8px/14px system-ui;letter-spacing:2px;text-align:center;color:#fff;text-shadow:0 1px 2px #000}
 .tm::after{content:"ENEMY STRIKE"}.rg::after{content:"RAGE"}
 #board{background:linear-gradient(#1a0b09,#0d0504);border:0;box-shadow:0 0 0 3px #1c0d0b,0 0 0 4.5px var(--gold2),0 0 26px rgba(255,90,10,.25)}
+#board.locked{pointer-events:none;opacity:.58;filter:saturate(.55)}
+#board.locked::after{content:attr(data-lock-label);position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:12px;background:rgba(10,4,7,.42);color:#ffe7a3;font:900 13px Cinzel,Georgia,serif;letter-spacing:2px;text-align:center;text-shadow:0 2px 8px #000}
 .t::before{background:linear-gradient(150deg,#fff9 0,#fff0 38%,#0007 100%),radial-gradient(circle at 50% 55%,var(--c) 40%,#000a 135%),var(--c)}
 .t::after{content:"";position:absolute;inset:24% 32% 44% 26%;background:radial-gradient(ellipse at 40% 35%,#fffd,#fff0 70%);border-radius:50%}
 #bst{display:flex;gap:6px;justify-content:center;padding-bottom:4px}
@@ -143,14 +145,14 @@ async function swap(a,b){
  if(busy||over||pst>0||!canTakeTurn())return;
  if(!NET&&skipPlayerMove){skipPlayerMove=false;clearHint();tx.push({s:"YOUR MOVE WAS SKIPPED! 💫",x:W/2,y:H*.3,l:1.5,c:"#9ee7ff"});$("hint").textContent="STUNNED · Your next move was skipped";return}
  if(NET&&room&&typeof room.move==="function"){
-  clearHint();busy=true;
+  clearHint();busy=true;ui();
   try{
    const result=await room.move(a,b);
    if(!NET)return;
    cloudBoard(result.board);const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;if(result.turn==="p1"||result.turn==="p2")activeTurn=result.turn;ui();
    {const at=result.attacks||[];for(let i=0;i<at.length;i++)await act(vis(at[i],"p"),"p",0,i===at.length-1&&E.hp<=0)}
-   busy=over;
-  }catch(error){snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())}
+   busy=over;ui();
+  }catch(error){snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected());ui()}
   return;
  }
  clearHint();busy=true;sw(a,b);await sleep(190);const g=find();if(!g.length){sw(a,b);snd("bad");await sleep(190);busy=false;return}await resolve(g);if(!over&&!hasMove())reroll();busy=over
@@ -165,7 +167,8 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
 /* ---------- fight logic ---------- */
 function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh]};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;skipPlayerMove=false;eNext=T+eInt+1500;rage=0;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;if(g3on)Ring3D.reset();initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")+(L>=4?" · Chain combos = special moves!":"")+(L>=5?" · TAP when the rival strikes = PARRY!":"")}
-function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&(NET||L>=3)&&!over?"on":""}
+function updateBoardLock(){const b=$("board"),locked=NET&&(!canTakeTurn()||busy||over||pst>0);b.classList.toggle("locked",!!locked);b.dataset.lockLabel=busy&&!over?"RESOLVING MOVE…":over?"MATCH FINISHED":activeTurn&&room&&activeTurn!==room.player?"RIVAL’S TURN":"WAITING…";b.setAttribute("aria-disabled",String(!!locked))}
+function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&(NET||L>=3)&&!over?"on":"";updateBoardLock()}
 function vis(h,who){const k=h.kind,c=+h.chain||1,n=+h.cleared||0;if(k==="slam")return n>=5&&c>=2?"piledriver":n>=5&&Math.random()<.4?"ramcharge":k;if(c>=4)return"crowdrush";if(c>=3)return"tornado";if(c>=2&&n===4)return"dropkick";if(c>=2&&n===3)return"flurry";if(c===1&&n===4&&(++hatN%2===0))return"hatrang";const f=who==="e"?E:P;if(c===1&&n===3&&f.hp<f.mx*.4)return"woolbomb";return k}
 const KD={punch:700,rifle:1000,slam:2800,flurry:950,dropkick:900,tornado:1500,splash:2700,ramcharge:1300,piledriver:2900,lavawave:2500,hatrang:1400,woolbomb:1200,crowdrush:1800,finisher:3800},KI={punch:.45,rifle:.62,slam:.78,flurry:.5,dropkick:.55,tornado:.62,splash:.8,ramcharge:.5,piledriver:.7,lavawave:.72,hatrang:.55,woolbomb:.5,crowdrush:.72,finisher:.7},KB={flurry:"punch",dropkick:"punch",tornado:"punch",splash:"slam",ramcharge:"punch",piledriver:"slam",lavawave:"slam",hatrang:"rifle",woolbomb:"punch",crowdrush:"punch",finisher:"slam"},LBL={punch:"POW!",rifle:"BANG!",slam:"SLAM!!",flurry:"FLURRY!",dropkick:"DROPKICK!",tornado:"TORNADO!",splash:"SPLASH!!",ramcharge:"RAM CHARGE!",piledriver:"PILEDRIVER!!",lavawave:"LAVA WAVE!!",hatrang:"HAT-RANG!",woolbomb:"WOOL BOMB!",crowdrush:"CROWD RUSH!",finisher:"FINISHER! 🌋"};
 let hatN=0,lab=0;const LV=()=>NET?99:L;
@@ -182,11 +185,11 @@ $("slam").onclick=()=>{
  au();
  if(NET&&room&&typeof room.special==="function"){
   if(rage<100||busy||over||!canTakeTurn())return;
-  busy=true;
+  busy=true;ui();
   room.special().then(result=>{
    const ownHp=Number(result.hp),rivalHp=Number(result.opponentHp);if(Number.isFinite(ownHp))P.hp=ownHp;if(Number.isFinite(rivalHp))E.hp=rivalHp;rage=Number(result.rage)||0;if(result.turn==="p1"||result.turn==="p2")activeTurn=result.turn;ui();
    return act(nextSp(),"p",0);
-  }).then(()=>{busy=over}).catch(()=>{snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected())});
+  }).then(()=>{busy=over;ui()}).catch(()=>{snd("bad");busy=!!(room&&typeof room.isConnected==="function"&&!room.isConnected());ui()});
   return;
  }
  if(rage>=100&&L>=3&&!over){rage=0;ui();const kk=nextSp();act(kk,"p",{slam:46,splash:54,lavawave:50}[kk])}
@@ -229,9 +232,8 @@ function setupCloudRoom(r){
   if(m.turn==="p1"||m.turn==="p2")activeTurn=m.turn;
   P.hp=Math.max(0,Math.min(P.mx,Number(m.hp)||0));
   E.hp=Math.max(0,Math.min(E.mx,Number(m.opponentHp)||0));
-  ui();
-  busy=true;
-  (async()=>{for(const hit of (m.attacks||[]))await act(vis(hit,"e"),"e",0);busy=over})();
+  busy=true;ui();
+  (async()=>{for(const hit of (m.attacks||[]))await act(vis(hit,"e"),"e",0);busy=over;ui()})();
  });
  room.on("emoji",m=>{const i=Number(m.data&&m.data.index);if(Number.isInteger(i)&&i>=0&&i<4)tx.push({s:EMO[i],x:W*.69,y:H*.3,l:1.4,c:"#fff"})});
  room.on("match_over",m=>{
@@ -375,8 +377,8 @@ const bd=$("board"),adj=(a,b)=>Math.abs((a/N|0)-(b/N|0))+Math.abs(a%N-b%N)==1;
 function idx(e){const r=bd.getBoundingClientRect(),c=(e.clientX-r.left)/r.width*N|0,w=(e.clientY-r.top)/r.height*N|0;return c<0||c>=N||w<0||w>=N?-1:w*N+c}
 function unsel(){if(sel!=null&&G[sel])G[sel].el.classList.remove("s");sel=null}
 bd.onpointerdown=e=>{au();clearHint();if(busy||over||pst>0||!canTakeTurn())return;down={i:idx(e),x:e.clientX,y:e.clientY}};
-bd.onpointermove=e=>{if(!down||busy)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.max(Math.abs(dx),Math.abs(dy))>16){const i=down.i,j=Math.abs(dx)>Math.abs(dy)?i+Math.sign(dx):i+Math.sign(dy)*N;down=null;unsel();if(i>=0&&j>=0&&j<N*N&&adj(i,j))swap(i,j)}};
-bd.onpointerup=()=>{if(!down)return;const i=down.i;down=null;if(i<0||busy)return;if(sel!=null&&sel!==i&&adj(sel,i)){const s=sel;unsel();swap(s,i)}else{unsel();sel=i;G[i].el.classList.add("s")}};
+bd.onpointermove=e=>{if(!down||busy||over||pst>0||!canTakeTurn())return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.max(Math.abs(dx),Math.abs(dy))>16){const i=down.i,j=Math.abs(dx)>Math.abs(dy)?i+Math.sign(dx):i+Math.sign(dy)*N;down=null;unsel();if(i>=0&&j>=0&&j<N*N&&adj(i,j))swap(i,j)}};
+bd.onpointerup=()=>{if(!down)return;const i=down.i;down=null;if(i<0||busy||over||pst>0||!canTakeTurn())return;if(sel!=null&&sel!==i&&adj(sel,i)){const s=sel;unsel();swap(s,i)}else{unsel();sel=i;G[i].el.classList.add("s")}};
 /* ---------- ring ---------- */
 const cv=$("ring"),X=cv.getContext("2d");let W=300,H=300,s=1,fy=200,gap=100,px=0,ex=0;
 function fit(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;X.setTransform(d,0,0,d,0,0);s=Math.min(W/430,H/250);fy=H*.7;gap=W*.38;px=W*.31;ex=W*.69;if(g3on)Ring3D.resize(W,H,d)}
