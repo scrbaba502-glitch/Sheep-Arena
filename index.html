@@ -163,7 +163,7 @@ async function swap(a,b){
 async function resolve(gr){let chain=0;while(gr.length&&!over){chain++;snd("pop");for(const g of gr){g.c.forEach(i=>G[i].el.classList.add("pop"));hit(g,chain)}if(chain>1){tx.push({s:["","","NICE! x2","GREAT! x3","EPIC! x4"][Math.min(chain,4)]||"LEGENDARY! x"+chain,x:W/2,y:H*.3,l:1.3,c:"#ffe066"});if(chain>2)coins+=chain}await sleep(230);for(const g of gr)g.c.forEach(i=>{G[i].el.remove();G[i]=null});gravity();await sleep(270);gr=find()}}
 function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
  if(n>=5){if(L>=3){k="slam";d=42}else if(L>=2){k="rifle";d=20}else d=18}else if(n==4){if(L>=2){k="rifle";d=18}else d=13}
- rage=Math.min(100,rage+(chain>1?3:n>=5?16:n==4?10:6));if(!NET&&n>=4)flockSignature(n);ui();const cr=Math.random()<Math.min(.25,.06+.01*L);if(cr)tx.push({s:"CRITICAL!",x:W*.69,y:H*.25,l:1,c:"#ff5a4a"});act(k,"p",Math.round(d*m*(cr?1.8:1)))}
+ const chosen=FIGHTERS.find(x=>x.id===selectedFighterId);rage=Math.min(100,rage+(chain>1?3:n>=5?16:n==4?10:6));if(chosen&&chosen.id==="flock-ram-bo")rage=Math.min(100,rage+3);if(chosen&&chosen.id==="flock-count-ewe-la")rage=Math.min(100,rage+2);if(chosen&&chosen.id==="flock-captain-mutton"&&n>=4)d=Math.round(d*1.15);if(!NET&&n>=4)flockSignature(n);ui();const cr=Math.random()<Math.min(.25,.06+.01*L);if(cr)tx.push({s:"CRITICAL!",x:W*.69,y:H*.25,l:1,c:"#ff5a4a"});act(k,"p",Math.round(d*m*(cr?1.8:1)))}
 /* ---------- fight logic ---------- */
 function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh],fighterId:selectedFighterId};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;flockGuard=0;flockSigReadyAt=T+1800;A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
@@ -204,6 +204,8 @@ function impact(){const tg=A.who=="p"?E:P,k=A.k,x=A.who=="p"?W*.69:W*.31;if(!(NE
    const f=FIGHTERS.find(x=>x.id===selectedFighterId);
    if(f&&f.faction==="Flock"){
     if(f.id==="flock-baa-rbarian")dealt=Math.round(dealt*.84);
+    if(f.id==="flock-ram-bo")rage=Math.min(100,rage+4);
+    if(f.id==="flock-baa-tman"&&Math.random()<.18){dealt=0;tx.push({s:"NIGHT WATCH · DODGED",x:W*.31,y:H*.43,l:1.1,c:"#b5a2ff"})}
     if(f.id==="flock-wool-vader"&&A.k!=="slam")rage=Math.min(100,rage+3);
     if(f.id==="flock-lord-fleece")dealt=Math.round(dealt*.9);
     if(f.id==="flock-sir-woolot")dealt=Math.round(dealt*.88);
