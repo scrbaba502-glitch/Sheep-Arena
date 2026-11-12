@@ -1,7 +1,7 @@
-# BEAST ARENA — Evolution Blueprint
+# BEASTRYX ARENA — Evolution Blueprint
 
-> Working brand: **BEAST ARENA** (final typography/name lock pending user's confirmation).
-> Tagline direction: **One Arena. Every Species. No Limits.**
+> Working brand: **BEASTRYX ARENA** (name selected by user).
+> Tagline direction: **Every Species. One Arena. Infinite Power.**
 
 ## Product direction
 
