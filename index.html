@@ -94,6 +94,156 @@ button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:
 @media(max-height:720px){#board{width:min(92vw,38dvh)}}
 #lab{display:none;position:fixed;left:0;right:0;bottom:0;max-height:44vh;overflow:auto;z-index:30;background:rgba(20,8,10,.95);border-top:1px solid var(--gold2);padding:8px;text-align:center}#lab.on{display:block}#lab b{display:block;color:var(--gold);font:800 11px system-ui;letter-spacing:1px;margin-bottom:6px}#lab button{font:700 11px system-ui;margin:3px;padding:8px 10px;border-radius:99px;border:1px solid var(--gold2);background:#2a0d14;color:var(--gold)}#lab button.x{background:#7a1b1b;color:#fff}#bst{flex-wrap:wrap}#bst button#b4,#bst button#b5{padding:7px 9px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- premium start screen ---------- */
+#ov.home-screen{
+  --home-gold:#f4d27d;
+  justify-content:flex-start;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  gap:clamp(10px,1.8vh,18px);
+  padding:clamp(24px,5vh,54px) 22px max(24px,env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse at 50% 13%,rgba(226,87,43,.28),transparent 42%),
+    radial-gradient(ellipse at 50% 100%,rgba(111,24,45,.28),transparent 52%),
+    linear-gradient(155deg,#230b13 0%,#10070d 48%,#080509 100%);
+}
+#ov.home-screen::before{
+  inset:10px;
+  border:1px solid rgba(244,210,125,.42);
+  border-radius:22px;
+  box-shadow:inset 0 0 0 4px rgba(0,0,0,.32),inset 0 0 0 5px rgba(244,210,125,.1),0 0 38px #0008;
+}
+#ov.home-screen::after{
+  content:"";
+  position:absolute;
+  width:min(82vw,420px);
+  aspect-ratio:1;
+  top:2%;
+  left:50%;
+  transform:translateX(-50%);
+  border-radius:50%;
+  border:1px solid rgba(244,210,125,.08);
+  box-shadow:0 0 0 18px rgba(244,210,125,.018),0 0 0 38px rgba(244,210,125,.014),inset 0 0 55px rgba(226,87,43,.08);
+  pointer-events:none;
+}
+#ov.home-screen>*{position:relative;z-index:1;flex-shrink:0}
+#ov.home-screen .home-brand{display:flex;flex-direction:column;align-items:center;gap:7px;margin:0 auto 2px}
+#ov.home-screen .home-emblem{
+  width:clamp(92px,17vh,132px);
+  height:clamp(92px,17vh,132px);
+  display:grid;place-items:center;
+  border-radius:28px;
+  border:1px solid rgba(244,210,125,.62);
+  background:linear-gradient(145deg,rgba(93,24,35,.9),rgba(15,7,12,.96));
+  box-shadow:0 0 0 5px rgba(244,210,125,.06),0 14px 38px #0009,0 0 34px rgba(220,94,47,.16);
+}
+#ov.home-screen .home-emblem svg{width:78%;height:78%;filter:drop-shadow(0 5px 12px #0009)}
+#ov.home-screen .home-eyebrow{
+  font:800 10px Cinzel,Georgia,serif;
+  letter-spacing:5px;
+  color:#e7bd70;
+  opacity:.95;
+}
+#ov.home-screen h1{
+  font-size:clamp(34px,8vw,54px);
+  letter-spacing:clamp(2px,1vw,5px);
+  line-height:.98;
+  text-shadow:0 8px 24px #0009;
+}
+#ov.home-screen h1 em{font-style:normal;color:#fff0c4}
+#ov.home-screen .home-subtitle{
+  font:800 10px Cinzel,Georgia,serif;
+  letter-spacing:clamp(2px,.7vw,4px);
+  color:#f2c979;
+  opacity:.9;
+}
+#ov.home-screen>small{
+  font:700 10px Cinzel,Georgia,serif;
+  letter-spacing:2.5px;
+  color:#d9b77a;
+  padding:7px 12px;
+  border-top:1px solid rgba(232,196,106,.22);
+  border-bottom:1px solid rgba(232,196,106,.22);
+}
+#ov.home-screen>p{
+  max-width:390px;
+  font:500 clamp(16px,2.1vh,19px)/1.42 "Cormorant Garamond",Georgia,serif;
+  color:#f4ead6;
+  opacity:.92;
+  margin:0 auto;
+}
+#ov.home-screen .stats{
+  width:min(100%,390px);
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  margin:2px auto;
+  font:700 13px Cinzel,Georgia,serif;
+}
+#ov.home-screen .stats span{
+  padding:10px 5px;
+  border:1px solid rgba(232,196,106,.25);
+  border-radius:11px;
+  background:linear-gradient(145deg,rgba(70,24,34,.66),rgba(12,7,11,.82));
+  color:#f4e4c1;
+  white-space:nowrap;
+}
+#ov.home-screen .chips{width:min(100%,360px);gap:7px}
+#ov.home-screen .chips::before{
+  content:"CHOOSE YOUR FIGHTER LOOK";
+  width:100%;
+  color:#c8a66b;
+  font:700 9px Cinzel,Georgia,serif;
+  letter-spacing:2px;
+  margin:2px 0 1px;
+}
+#ov.home-screen .chip{
+  min-width:38px;
+  padding:7px 10px;
+  border-color:rgba(232,196,106,.35);
+  background:rgba(9,5,9,.72);
+}
+#ov.home-screen .chip.on{
+  border-color:#ffe39a;
+  background:linear-gradient(#f8dfa0,#c38b37);
+  color:#251018;
+}
+#ov.home-screen .btn{
+  width:min(100%,340px);
+  min-height:50px;
+  margin:3px auto 0;
+  border:1px solid #ffe5a0;
+  border-radius:13px;
+  background:linear-gradient(180deg,#ffe9a8 0%,#e7b957 48%,#a96a24 100%);
+  color:#241017;
+  box-shadow:0 2px 0 #fff7 inset,0 5px 0 #61351d,0 12px 26px #0008,0 0 24px rgba(236,174,79,.18);
+  font:900 13px Cinzel,Georgia,serif;
+  letter-spacing:2px;
+  text-shadow:0 1px #fff6;
+}
+#ov.home-screen .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #61351d,0 6px 12px #0008}
+#ov.home-screen .btn.ghost{
+  min-height:43px;
+  margin:0 auto;
+  border:1px solid rgba(232,196,106,.48);
+  background:linear-gradient(145deg,rgba(62,20,33,.78),rgba(15,7,12,.92));
+  color:#f0d28e;
+  box-shadow:0 5px 15px #0005,inset 0 1px #fff1;
+  text-shadow:none;
+}
+@media(max-height:700px){
+  #ov.home-screen{gap:8px;padding-top:16px}
+  #ov.home-screen .home-emblem{width:78px;height:78px;border-radius:20px}
+  #ov.home-screen h1{font-size:32px}
+  #ov.home-screen>p{font-size:15px}
+  #ov.home-screen .stats span{padding:7px 4px}
+}
+@media(min-width:700px){
+  #ov.home-screen{padding-top:28px}
+  #ov.home-screen .home-emblem{width:126px;height:126px}
+}
+
 </style></head><body>
 <div id="app">
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
@@ -475,7 +625,7 @@ function labReset(){if(!lab)return;setup();P.hp=P.mx=999;E.hp=E.mx=99999;eNext=T
 function labPlay(k){if(!lab||A||pend||over)return;au();if(k=="parry"){act("punch","e",0);return}if(k=="finisher"){E.hp=1;act("finisher","p",1);return}act(k,"p",1)}
 function startLab(){$("ov").className="h";lab=1;const b=$("lab");b.innerHTML="<b>🥋 MOVE LAB · tap to preview (Lv = unlock level in solo)</b>";for(const[k,n,l]of MV)b.appendChild(mkb(n+" · Lv"+l,()=>labPlay(k)));b.appendChild(mkb("✖ EXIT LAB",()=>{lab=0;b.className="";over=true;busy=true;home()},"x"));b.className="on";labReset()}
 function homeEx(o){const st=Object.values(ST).reduce((x,y)=>x+y,0),d=document.createElement("div");d.className="stats";d.innerHTML="<span>⭐ "+st+"</span><span>🪙 "+coins+"</span><span>⚔️ "+rec()+"</span>";o.insertBefore(d,o.querySelector("button"));wardrobe(o);o.appendChild(mkb("🥋 MOVE LAB",startLab,"btn ghost"));o.appendChild(mkb("⚔️ ONLINE DUEL",()=>duelMenu(),"btn ghost"))}
-function home(){ov(`<svg viewBox="0 0 120 120" width="104" height="104"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg><small>A² PRESENTS</small><h1>SHEEP ARENA</h1>`,"VOLCANO WRESTLING · MATCH-3","Match stones to land blows: 3 = punch, 4 = rifle, then the blazing chokeslam. Beat each rival to level up and unlock new moves and outfits."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);}
+function home(){ov(`<div class="home-brand"><div class="home-emblem"><svg viewBox="0 0 120 120" role="img" aria-label="A squared arena crest"><defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e2b043"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><path d="M60 6 106 21v37c0 29-19 47-46 58C33 105 14 87 14 58V21z" fill="#14090a" stroke="url(#gd)" stroke-width="5"/><polygon points="32,46 38,24 50,36 60,17 70,36 82,24 88,46" fill="url(#gd)"/><text x="60" y="90" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="900" font-size="36" fill="url(#gd)">A²</text></svg></div><small class="home-eyebrow">A² ORIGINAL ARENA</small><h1>SHEEP <em>ARENA</em></h1><div class="home-subtitle">THE VOLCANO FIGHT CLUB</div></div>`,"3D ARENA COMBAT · MATCH-3 COMBOS","Build your fight. Match stones to unleash punches, chain reactions and brutal signature moves. Defeat tougher rivals, unlock abilities and claim the arena."+dmsg,L>1?"CONTINUE · LEVEL "+L:"ENTER THE ARENA",setup,homeEx);$("ov").classList.add("home-screen");}
 home();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(function(){});
 function hashJoin(){const c=parseCode(location.hash.slice(1));if(!c||room||NET)return;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}duelMenu(c)}
