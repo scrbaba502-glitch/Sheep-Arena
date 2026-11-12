@@ -99,6 +99,7 @@ button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:
 #ov .bx-card.locked{opacity:.65;border-style:dashed;cursor:default}
 #ov .bx-section{grid-column:1/-1;color:#f4d38a;font-size:10px;font-weight:900;letter-spacing:2px;margin:5px 2px 0}
 #ov .bx-foot{font-size:11px;color:#c7bca9;margin:0 auto 12px;max-width:440px}
+#ov .bx-card .bx-kit{display:block;color:#cfc3b0;font-size:9px;line-height:1.35;margin-top:6px;white-space:normal}
 @media(min-width:600px){#ov .bx-select{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style></head><body>
 <div id="app">
@@ -518,9 +519,10 @@ function chooseFighter(){
   const glyphs=["🐏","🐑","🐏","👑","🦇","🛡️","🎖️","🌙"];
   roster.forEach((fighter,i)=>{
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
-   card.innerHTML='<span class="bx-emoji">'+glyphs[i%glyphs.length]+'</span><b></b><small></small>';
+   card.innerHTML='<span class="bx-emoji">'+glyphs[i%glyphs.length]+'</span><b></b><small></small><span class="bx-kit"></span>';
    card.querySelector("b").textContent=fighter.name;
    card.querySelector("small").textContent=(fighter.element||"FOUNDING FLOCK")+" · "+fighter.role;
+   const kit=card.querySelector(".bx-kit");const details=fighter.abilityDetails||{};kit.textContent="PASSIVE · "+(details.passive||fighter.abilities.passive)+" | SIGNATURE · "+(details.signature||fighter.abilities.signature)+" | ULTIMATE · "+(details.ultimate||fighter.abilities.ultimate);
    card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
    card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
    grid.appendChild(card);
