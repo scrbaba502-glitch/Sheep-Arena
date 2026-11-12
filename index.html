@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--gold);font-famil
 #lv{font-family:Cinzel,Georgia,serif;font-weight:900;font-size:18px;letter-spacing:2px;text-align:center}
 #hint{font-size:11px;text-align:center;opacity:.8}
 #ring{flex:1 1 0;min-height:0;width:100%;border-radius:14px;border:1.5px solid var(--gold2)}
-#mid{display:flex;align-items:center;gap:8px}
+#flockKit{display:none;margin:0 auto 7px;width:min(96%,520px);padding:7px 10px;border:1px solid #70552d;border-radius:9px;background:linear-gradient(100deg,#1c1110,#100d14);color:#f4dfb1;font:700 10px system-ui;letter-spacing:.25px;text-align:center;line-height:1.45}#flockKit b{color:#ffe29a}#mid{display:flex;align-items:center;gap:8px}
 .tm,.rg{flex:1;height:8px;border-radius:9px;background:#000;border:1px solid #5a3d12;overflow:hidden}
 .tm i{display:block;height:100%;width:0;background:#ff4a2a}.rg i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff8a00,#ffe066)}
 #slam{font:800 12px system-ui;padding:8px 10px;border-radius:99px;border:1px solid var(--gold2);background:var(--panel);color:#7a5a22;opacity:.5}
@@ -106,7 +106,8 @@ button:focus-visible,.in:focus-visible{outline:2px solid #fff2b0;outline-offset:
  <div id="top"><div class="who"><span id="pn">YOU</span> <span id="pv"></span><div class="hp"><i id="ph"></i></div></div><div id="lv">LV 1</div><div class="who r"><span id="en">-</span> <span id="ev"></span><div class="hp"><i id="eh"></i></div></div></div>
  <div id="hint"></div>
  <canvas id="ring"></canvas>
- <div id="mid"><div class="tm" id="tmw"><i id="et"></i></div><div class="rg"><i id="rg"></i></div><button id="slam">🔥 CHOKESLAM</button></div>
+ <div id="mid"><div class="tm" id="tmw"><i id="et"></i></div><div class="rg"><i id="rg"></i></div><button id="slam">🔥 SPECIAL</button></div>
+ <div id="flockKit" aria-live="polite"></div>
  <div id="board"></div>
  <div id="emo"></div>
  <div id="bst"><button id="b1">💊 Heal · 30🪙</button><button id="b2">❄️ Freeze · 25🪙</button><button id="b3">🔀 Shuffle · 15🪙</button><button id="b4">🔊</button></div>
@@ -167,7 +168,7 @@ function hit(g,chain){const n=g.c.length,m=1+.3*(chain-1);let k="punch",d=9;
 /* ---------- fight logic ---------- */
 function setup(){const hp=100+L*6,tr=TR[(L-1)%4],boss=L%5==0,e=Math.round((70+L*24)*tr.hp*(boss?2:1)),mh=Math.min(L-1,7);P={hp,mx:hp,hat:HAT[hatSel>=0&&hatSel<=mh?hatSel:mh],fighterId:selectedFighterId};E={hp:e,mx:e,name:(boss?"👹 BOSS ":"")+ENM[(L-1)%8]+" · "+tr.t,hat:boss?"👹":HAT[(L*3)%8],r:tr.r||0,dm:boss?1.3:1};eInt=Math.max(1500,(5200-L*330)*tr.iv*(boss?.85:1));hint=null;hintT=0;pst=0;eNext=T+eInt+1500;rage=0;flockGuard=0;flockSigReadyAt=T+1800;flockFxUntil=0;flockUltUntil=0;flockUltId='';A=null;pend=0;Q=Promise.resolve();ps=[];tx=[];lavaKO=false;over=false;busy=false;initBoard();ui();
  tx.push({s:E.name.includes("BOSS")?"BOSS FIGHT!":"FIGHT!",x:W/2,y:H*.35,l:1.6,c:"#ffe066"});$("hint").textContent="Match 3 = Punch"+(L>=2?" · 4 = Rifle":"")+(L>=3?" · 5 or full RAGE = Chokeslam":"")}
-function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";$("slam").className=rage>=100&&L>=3&&!over?"on":""}
+function ui(){if(NET&&activeTurn){$("hint").textContent=activeTurn===room?.player?"YOUR TURN · Make one valid move or use your charged special.":"RIVAL’S TURN · Your opponent is choosing a move."}if(NET&&room&&typeof room.move!=="function"&&hpPub!==Math.ceil(P.hp)){hpPub=Math.ceil(P.hp);room.presence({hp:hpPub})}else if(NET&&room&&typeof room.move==="function")hpPub=Math.ceil(P.hp);$("lv").innerHTML="LV "+L+"<br><small style=\"font:700 10px system-ui;letter-spacing:1px\">🪙 "+coins+"</small>";$("ph").style.width=P.hp/P.mx*100+"%";$("eh").style.width=E.hp/E.mx*100+"%";$("en").textContent=E.name;$("pv").textContent=Math.ceil(P.hp);$("ev").textContent=Math.ceil(E.hp);$("rg").style.width=rage+"%";const fighter=FIGHTERS.find(f=>f.id===selectedFighterId);const flock=fighter&&fighter.faction==="Flock";$("flockKit").style.display=flock?"block":"none";if(flock){const a=fighter.abilityDetails||{};const remain=Math.max(0,Math.ceil((flockSigReadyAt-T)/1000));$("flockKit").textContent=fighter.name+" · PASSIVE: "+(a.passive||fighter.abilities.passive)+" · SIGNATURE: "+(a.signature||fighter.abilities.signature)+" · "+(remain?"READY IN "+remain+"s":"SIGNATURE READY")+" · ULTIMATE "+Math.floor(rage)+"%";$("slam").textContent=rage>=100&&L>=3?"⚡ "+(a.ultimate||"ULTIMATE"):"⚡ "+(a.ultimate||"ULTIMATE")+" · "+Math.floor(rage)+"%"}else{$("slam").textContent="🔥 SPECIAL"}$("slam").className=rage>=100&&L>=3&&!over?"on":""}
 function flockSignature(matchSize){
  const f=FIGHTERS.find(x=>x.id===selectedFighterId);if(!f||f.faction!=="Flock"||T<flockSigReadyAt)return;
  flockSigReadyAt=T+8500;
