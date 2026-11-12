@@ -478,12 +478,12 @@ function chooseFighter(){
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
    card.innerHTML='<span class="bx-emoji">'+glyphs[i%glyphs.length]+'</span><b></b><small></small>';
    card.querySelector("b").textContent=fighter.name;
-   card.querySelector("small").textContent=fighter.role+" · "+fighter.species;
+   card.querySelector("small").textContent=fighter.element+" · "+fighter.role;
    card.setAttribute("aria-pressed",fighter.id===selectedFighterId?"true":"false");
    card.onclick=()=>{selectedFighterId=fighter.id;sv("bx.fighter",selectedFighterId);grid.querySelectorAll(".bx-card:not(.locked)").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false")});card.classList.add("on");card.setAttribute("aria-pressed","true")};
    grid.appendChild(card);
   });
-  const humanHeading=document.createElement("div");humanHeading.className="bx-section";humanHeading.textContent="PLAYABLE NOW · HUMAN DYNASTY";grid.appendChild(humanHeading);
+  const humanHeading=document.createElement("div");humanHeading.className="bx-section";humanHeading.textContent="THE SIX ELEMENTAL SOVEREIGNS · HUMAN DYNASTY";grid.appendChild(humanHeading);
   const humanGlyphs=["⚔️","🌑","🗡️","🛡️","🧪","🛩️"];
   roster.filter(f=>f.faction==="Human Dynasty").forEach((fighter,i)=>{
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
