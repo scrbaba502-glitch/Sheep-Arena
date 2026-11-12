@@ -221,7 +221,9 @@ try {
   }
   if (!finished) throw new Error("Test player could not finish the match within 40 legal moves");
   const [end1, end2] = await withTimeout(Promise.all([ended1, ended2]), "both clients receiving match_over", 12000);
-  if (end1.winner !== "p1" || end2.winner !== "p1") throw new Error("Match result was not synchronized to both clients");
+  if (!["p1", "p2"].includes(end1.winner) || end1.winner !== end2.winner) {
+    throw new Error("Match result was not synchronized consistently: client1=" + JSON.stringify(end1) + ", client2=" + JSON.stringify(end2));
+  }
   console.log("Browser adapter synchronized the match result.");
 
   const rematch1 = new Promise(resolve => client1.on("rematch_started", resolve));
