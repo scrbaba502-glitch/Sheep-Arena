@@ -280,12 +280,13 @@ export class MatchRoom extends DurableObject<Env> {
       const damage = result.attacks.reduce((sum, attack) => sum + attack.damage, 0);
       const stunMs = result.attacks.some(attack => attack.kind === "slam") ? 2600 : 0;
       rival.hp = Math.max(0, rival.hp - damage);
-      if (stunMs) rival.stunnedUntil = now + stunMs;
+      if (stunMs) rival.stunnedUntil = 0;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
-      else game.turn = rivalId;
+      else game.turn = stunMs ? player : rivalId;
       await this.ctx.storage.put("match", game);
       socket.send(JSON.stringify({ type: "move_result", seq, board: own.board, rage: own.rage, attacks: result.attacks, hp: own.hp, opponentHp: rival.hp, chains: result.chains, status: game.status, turn: game.turn }));
       this.sendToPlayer(rivalId, { type: "incoming_attack", player, attacks: result.attacks, damage, hp: rival.hp, opponentHp: own.hp, stunMs, status: game.status, turn: game.turn });
+      if (stunMs && game.status === "active") this.sendToPlayer(rivalId, { type: "turn_skipped", by: player, reason: "stunned", turn: game.turn });
       this.broadcast({ type: "turn_update", turn: game.turn });
       if (game.status === "finished") this.broadcast({ type: "match_over", winner: game.winner, hp: { p1: game.players.p1.hp, p2: game.players.p2.hp } });
       return;
@@ -308,15 +309,16 @@ export class MatchRoom extends DurableObject<Env> {
         socket.send(JSON.stringify({ type: "special_rejected", reason: "action_not_ready" })); return;
       }
       own.rage = 0; own.lastMoveAt = now; rival.hp = Math.max(0, rival.hp - 46);
-      rival.stunnedUntil = now + 2600;
+      rival.stunnedUntil = 0;
       if (rival.hp <= 0) { game.status = "finished"; game.winner = player; }
-      else game.turn = rivalId;
+      else game.turn = player;
       await this.ctx.storage.put("match", game);
       socket.send(JSON.stringify({ type: "special_result", kind: "slam", damage: 46, rage: own.rage, hp: own.hp, opponentHp: rival.hp, status: game.status, turn: game.turn }));
       this.sendToPlayer(rivalId, {
         type: "incoming_attack", player, attacks: [{ kind: "slam", damage: 46, chain: 0, cleared: 0, critical: false }],
         damage: 46, hp: rival.hp, opponentHp: own.hp, stunMs: 2600, status: game.status, turn: game.turn
       });
+      if (game.status === "active") this.sendToPlayer(rivalId, { type: "turn_skipped", by: player, reason: "stunned", turn: game.turn });
       this.broadcast({ type: "turn_update", turn: game.turn });
       if (game.status === "finished") this.broadcast({ type: "match_over", winner: game.winner, hp: { p1: game.players.p1.hp, p2: game.players.p2.hp } });
       return;
