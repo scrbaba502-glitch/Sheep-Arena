@@ -414,6 +414,8 @@ function human(x,y,f,p,fighter){const c=X,v=fighter&&fighter.visual||{},primary=
  if(arch==="shadow-mage"){c.fillStyle="#171126";c.beginPath();c.moveTo(-19,-112);c.lineTo(0,-145);c.lineTo(19,-112);c.closePath();c.fill();c.strokeStyle=accent;c.lineWidth=2;c.beginPath();c.arc(0,-98,27,0,Math.PI*2);c.stroke();c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.moveTo(34,-25);c.lineTo(39,-120);c.stroke();c.fillStyle=accent;c.shadowColor=accent;c.shadowBlur=16;c.beginPath();c.arc(39,-126,9,0,Math.PI*2);c.fill();c.shadowBlur=0;if(p.fire){c.globalCompositeOperation="lighter";c.fillStyle="rgba(142,105,255,.5)";c.beginPath();c.arc(0,-70,40+Math.sin(T*.02)*5,0,Math.PI*2);c.fill();c.globalCompositeOperation="source-over"}}
  else if(arch==="commander"){c.fillStyle=accent;c.fillRect(-19,-121,38,6);c.fillRect(-12,-128,24,7);c.fillStyle=secondary;c.fillRect(25,-75,8,45);c.fillStyle=accent;c.fillRect(23,-81,12,8)}
  else if(arch==="duelist"){c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.moveTo(28,-40);c.lineTo(62,-105);c.stroke();c.fillStyle=accent;c.fillRect(58,-111,5,18)}
+ else if(arch==="inventor"){c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.arc(0,-105,27,0,Math.PI*2);c.stroke();c.fillStyle=accent;c.fillRect(-34,-73,68,8);c.fillStyle=secondary;c.fillRect(25,-53,13,35);c.fillStyle=accent;c.beginPath();c.arc(31,-59,9,0,Math.PI*2);c.fill()}
+ else if(arch==="sky-ace"){c.fillStyle=accent;c.beginPath();c.moveTo(-25,-105);c.lineTo(-8,-135);c.lineTo(0,-110);c.lineTo(8,-135);c.lineTo(25,-105);c.closePath();c.fill();c.strokeStyle=accent;c.lineWidth=4;c.beginPath();c.moveTo(25,-45);c.lineTo(58,-90);c.stroke();c.fillStyle=secondary;c.fillRect(-31,-70,62,8)}
  else{c.fillStyle=accent;c.fillRect(-29,-90,9,52);c.fillRect(20,-90,9,52);c.fillStyle=secondary;c.beginPath();c.arc(0,-105,22,Math.PI,0);c.fill()}
  if(p.ext){c.strokeStyle=accent;c.lineWidth=9;c.beginPath();c.moveTo(20,-64);c.lineTo(34+p.ext*35,-42);c.stroke()}c.restore()}
 function rope(x1,y1,x2,y2,h){["#c4272b","#f2efe6","#c4272b"].forEach((col,i)=>{const o=h*(.4+i*.3);X.lineCap="round";X.strokeStyle="rgba(0,0,0,.55)";X.lineWidth=5;X.beginPath();X.moveTo(x1,y1-o+2);X.lineTo(x2,y2-o+2);X.stroke();X.strokeStyle=col;X.lineWidth=3.5;X.beginPath();X.moveTo(x1,y1-o);X.lineTo(x2,y2-o);X.stroke();X.strokeStyle="rgba(255,255,255,.45)";X.lineWidth=1;X.beginPath();X.moveTo(x1,y1-o-1);X.lineTo(x2,y2-o-1);X.stroke()})}
@@ -463,6 +465,7 @@ const day=new Date().toDateString();let streak=ls("a2k",0),dmsg="";if(ls("a2d","
 $("b4").textContent=mute?"🔇":"🔊";fit();initBoard();ui();requestAnimationFrame(loop);
 
 let selectedFighterId=ls("bx.fighter", "flock-baa-rbarian");
+if(selectedFighterId==="human-nyx-veil"){selectedFighterId="human-atrox-nefas";sv("bx.fighter",selectedFighterId)}
 function chooseFighter(){
  const roster=window.BEASTRYX_FIGHTERS||[];
  if(!roster.length){setup();return}
@@ -481,7 +484,7 @@ function chooseFighter(){
    grid.appendChild(card);
   });
   const humanHeading=document.createElement("div");humanHeading.className="bx-section";humanHeading.textContent="PLAYABLE NOW · HUMAN DYNASTY";grid.appendChild(humanHeading);
-  const humanGlyphs=["⚔️","🌑","🗡️","🛡️"];
+  const humanGlyphs=["⚔️","🌑","🗡️","🛡️","🧪","🛩️"];
   roster.filter(f=>f.faction==="Human Dynasty").forEach((fighter,i)=>{
    const card=document.createElement("button");card.type="button";card.className="bx-card"+(fighter.id===selectedFighterId?" on":"");
    card.innerHTML='<span class="bx-emoji">'+humanGlyphs[i]+'</span><b></b><small></small>';card.querySelector("b").textContent=fighter.name;card.querySelector("small").textContent=fighter.role+" · "+fighter.species;
