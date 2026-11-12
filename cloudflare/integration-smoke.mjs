@@ -211,13 +211,18 @@ try {
   const boards = { [firstRoom.player]: clientMove.board, [secondRoom.player]: secondMatch.board };
   let nextTurn = clientMove.turn, finished = false;
   for (let attempt = 0; attempt < 40 && !finished; attempt++) {
-    await delay(130);
     const activeRoom = nextTurn === client1.player ? client1 : client2;
+    const opponentRoom = activeRoom === client1 ? client2 : client1;
     const [from, to] = firstLegalSwap(boards[nextTurn]);
-    const result = await withTimeout(activeRoom.move(from, to), "finishing the match", 12000);
+    const incomingPromise = new Promise(resolve => opponentRoom.on("incoming_attack", resolve));
+    const [result, attack] = await withTimeout(Promise.all([
+      activeRoom.move(from, to),
+      incomingPromise
+    ]), "finishing the match and receiving the attack", 12000);
     boards[nextTurn] = result.board;
     nextTurn = result.turn;
     finished = result.status === "finished";
+    if (!finished && attack.stunMs > 0) await delay(attack.stunMs + 75);
   }
   if (!finished) throw new Error("Test player could not finish the match within 40 legal moves");
   const [end1, end2] = await withTimeout(Promise.all([ended1, ended2]), "both clients receiving match_over", 12000);
