@@ -5,14 +5,22 @@
   // combat stats remain equal until fighter selection and ability systems are implemented.
   const baseline = Object.freeze({ health: 100, power: 100, defense: 100, speed: 100 });
   const sheep = [
-    { id: "flock-baa-rbarian", name: "Baa-rbarian", role: "Bruiser", passive: "iron-wool", signature: "ram-charge", ultimate: "volcanic-chokeslam" },
-    { id: "flock-wool-vader", name: "Wool Vader", role: "Controller", passive: "calm-presence", signature: "woolen-grip", ultimate: "dark-fleece" },
-    { id: "flock-ram-bo", name: "Ram-bo", role: "Striker", passive: "battle-instinct", signature: "rapid-barrage", ultimate: "alpha-stampede" },
-    { id: "flock-lord-fleece", name: "Lord Fleece", role: "Guardian", passive: "royal-resolve", signature: "regal-guard", ultimate: "crown-breaker" },
-    { id: "flock-baa-tman", name: "Baa-tman", role: "Tactician", passive: "night-watch", signature: "shadow-feint", ultimate: "midnight-impact" },
-    { id: "flock-sir-woolot", name: "Sir Wool-ot", role: "Defender", passive: "knightly-oath", signature: "wool-shield", ultimate: "honour-bound-slam" },
-    { id: "flock-captain-mutton", name: "Captain Mutton", role: "Ranger", passive: "steady-aim", signature: "precision-shot", ultimate: "meteor-volley" },
-    { id: "flock-count-ewe-la", name: "Count Ewe-la", role: "Disruptor", passive: "moonlit-focus", signature: "frost-bite", ultimate: "eclipse-crash" }
+    { id: "flock-baa-rbarian", name: "Baa-rbarian", role: "Bruiser", passive: "iron-wool", signature: "ram-charge", ultimate: "volcanic-chokeslam",
+      abilityDetails: { passive: "Reduces damage from heavy hits.", signature: "Charges through the opponent and knocks them back.", ultimate: "Leaps into a ground smash that releases a fiery shockwave." } },
+    { id: "flock-wool-vader", name: "Wool Vader", role: "Controller", passive: "calm-presence", signature: "woolen-grip", ultimate: "dark-fleece",
+      abilityDetails: { passive: "Builds control energy when attacks are avoided.", signature: "Suspends and briefly immobilises the opponent.", ultimate: "Creates a void field that pulls enemies inward and disrupts them." } },
+    { id: "flock-ram-bo", name: "Ram-bo", role: "Striker", passive: "battle-instinct", signature: "rapid-barrage", ultimate: "alpha-stampede",
+      abilityDetails: { passive: "Builds momentum through consecutive attacks.", signature: "Unleashes a rapid multi-hit combo.", ultimate: "Charges forward with a squad of spectral ram afterimages." } },
+    { id: "flock-lord-fleece", name: "Lord Fleece", role: "Guardian", passive: "royal-resolve", signature: "regal-guard", ultimate: "crown-breaker",
+      abilityDetails: { passive: "Gains resilience when health is low.", signature: "Raises a royal barrier to absorb damage.", ultimate: "Summons a giant spectral crown that crashes down on the arena." } },
+    { id: "flock-baa-tman", name: "Baa-tman", role: "Tactician", passive: "night-watch", signature: "shadow-feint", ultimate: "midnight-impact",
+      abilityDetails: { passive: "Improves evasion after a successful dodge.", signature: "Vanishes briefly and strikes from another position.", ultimate: "Launches a chain of gadget-assisted strikes from the darkness." } },
+    { id: "flock-sir-woolot", name: "Sir Wool-ot", role: "Defender", passive: "knightly-oath", signature: "wool-shield", ultimate: "honour-bound-slam",
+      abilityDetails: { passive: "Builds guard energy while defending.", signature: "Blocks an attack and counters with a shield bash.", ultimate: "Creates a protective ward before a powerful counterattack." } },
+    { id: "flock-captain-mutton", name: "Captain Mutton", role: "Ranger", passive: "steady-aim", signature: "precision-shot", ultimate: "meteor-volley",
+      abilityDetails: { passive: "Improves ranged accuracy when maintaining distance.", signature: "Fires a focused energy projectile.", ultimate: "Calls down a barrage of explosive star-like projectiles." } },
+    { id: "flock-count-ewe-la", name: "Count Ewe-la", role: "Disruptor", passive: "moonlit-focus", signature: "frost-bite", ultimate: "eclipse-crash",
+      abilityDetails: { passive: "Builds lunar energy as the battle progresses.", signature: "Launches an icy curse that slows the opponent.", ultimate: "Darkens the arena and drops a devastating lunar energy blast." } }
   ];
 
   const humans = [
