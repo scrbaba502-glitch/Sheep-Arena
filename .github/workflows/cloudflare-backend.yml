@@ -5,6 +5,15 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  push:
+    branches:
+      - sheep-arena-3d-v4
+    paths:
+      - "cloudflare/**"
+      - "index.html"
+      - "cloudflare-client.js"
+      - ".github/workflows/cloudflare-backend.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
   pull_request:
     paths:
       - "cloudflare/**"
