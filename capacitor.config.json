@@ -1,0 +1,11 @@
+{
+  "appId": "com.a2presents.mythbeastsclash",
+  "appName": "Mythbeasts Clash",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
