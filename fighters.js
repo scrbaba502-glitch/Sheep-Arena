@@ -17,9 +17,11 @@
 
   const humans = [
     { id: "human-commander-aurex", name: "Commander Aurex", role: "Tactician", passive: "battlefield-read", signature: "solar-volley", ultimate: "legion-overdrive", visual: { renderer: "human", archetype: "commander", primary: "#b98a35", secondary: "#27344f", accent: "#f4d27a" } },
-    { id: "human-nyx-veil", name: "Nyx Veil", role: "Shadow Magister", passive: "umbra-siphon", signature: "shadow-bind", ultimate: "eclipse-cataclysm", visual: { renderer: "human", archetype: "shadow-mage", primary: "#261b49", secondary: "#090b19", accent: "#a88aff" } },
+    { id: "human-atrox-nefas", name: "Atrox Nefas", role: "Shadow Magister", passive: "umbra-siphon", signature: "shadow-bind", ultimate: "eclipse-cataclysm", visual: { renderer: "human", archetype: "shadow-mage", primary: "#261b49", secondary: "#090b19", accent: "#a88aff" } },
     { id: "human-kaida-voss", name: "Kaida Voss", role: "Duelist", passive: "flow-state", signature: "crimson-crosscut", ultimate: "dragonstep-flurry", visual: { renderer: "human", archetype: "duelist", primary: "#9d273b", secondary: "#241a25", accent: "#ffb1a2" } },
-    { id: "human-varek-stone", name: "Varek Stone", role: "Vanguard", passive: "unyielding", signature: "titan-guard", ultimate: "ironfall", visual: { renderer: "human", archetype: "vanguard", primary: "#53616a", secondary: "#20272d", accent: "#e2b66b" } }
+    { id: "human-varek-stone", name: "Varek Stone", role: "Vanguard", passive: "unyielding", signature: "titan-guard", ultimate: "ironfall", visual: { renderer: "human", archetype: "vanguard", primary: "#53616a", secondary: "#20272d", accent: "#e2b66b" } },
+    { id: "human-elara-quill", name: "Dr. Elara Quill", role: "Battlefield Inventor", passive: "adaptive-blueprint", signature: "arc-pulse", ultimate: "singularity-engine", visual: { renderer: "human", archetype: "inventor", primary: "#247b83", secondary: "#142c39", accent: "#8ff4e8" } },
+    { id: "human-orion-kade", name: "Orion Kade", role: "Sky Ace", passive: "wind-reader", signature: "aerial-break", ultimate: "starfall-dive", visual: { renderer: "human", archetype: "sky-ace", primary: "#426ca8", secondary: "#17243e", accent: "#c6e7ff" } }
   ];
 
   const roster = sheep.map((fighter, index) => Object.freeze({
