@@ -10,6 +10,8 @@ on:
       - "cloudflare/**"
       - "index.html"
       - "cloudflare-client.js"
+      - "fighters.js"
+      - "cloudflare/validate-fighters.mjs"
       - ".github/workflows/cloudflare-backend.yml"
       - ".github/workflows/deploy-cloudflare.yml"
 jobs:
@@ -41,6 +43,8 @@ jobs:
         working-directory: cloudflare
         timeout-minutes: 3
         run: npm run test:integration
+      - name: BEASTRYX fighter registry checks
+        run: node cloudflare/validate-fighters.mjs
       - name: Frontend JavaScript syntax check
         working-directory: cloudflare
         run: node validate-frontend.mjs
