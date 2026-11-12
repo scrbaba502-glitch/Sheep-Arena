@@ -23,6 +23,10 @@ assert.ok(humans.some(f => f.id === "human-orion-kade" && f.role === "Sky Ace"),
   "Orion Kade must be registered as the Sky Ace");
 assert.ok(humans.every(f => f.visual.renderer === "human" && f.visual.archetype),
   "human champions need a human presentation archetype");
+assert.deepEqual([...humans.map(f => f.element)].sort(), ["Earth", "Fire", "Light", "Shadow Magic", "Storm", "Water"].sort(),
+  "Human Dynasty must cover six distinct elemental affinities");
+assert.ok(humans.every(f => f.elementTitle && f.abilities.passive && f.abilities.signature && f.abilities.ultimate),
+  "each elemental sovereign needs a title and three named abilities");
 assert.ok(roster.every(f => JSON.stringify(f.stats) === JSON.stringify(roster[0].stats)),
   "founding fighters must start with equal baseline stats");
 console.log("BEASTRYX fighter registry checks passed (8 sheep + 6 Human Dynasty champions, equal baseline stats).");
