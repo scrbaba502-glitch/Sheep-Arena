@@ -65,3 +65,29 @@ This audit inspected repository source and workflow configuration through GitHub
 ## Next implementation slice
 
 Build the fighter registry as an additive layer, first mapping the existing sheep presentation and cosmetic selections to stable fighter IDs. Then add a small compatibility adapter so the current sheep-only game still renders and plays as before. Add registry validation tests before introducing new species or ability effects.
+
+## Implementation progress — first roster and selection slice
+
+Branch-only changes now include:
+
+- `fighters.js`: eight original sheep champions as stable, data-driven fighter records, each with faction, species, role, equal baseline stats, passive/signature/ultimate identifiers and renderer/cosmetic metadata.
+- `cloudflare/validate-fighters.mjs`: Node-based checks for roster count, schema, unique IDs, sheep faction/species and equal baseline stats.
+- GitHub Actions workflow: runs the registry validator on pull requests affecting the game.
+- `index.html`: BEASTRYX identity and a champion-selection overlay. Selection persists locally and the chosen fighter ID is attached to the local player state.
+- Species roadmap previews: Human, Beast, Mythic and Cyber are shown as in-development, not falsely represented as playable.
+- `manifest.webmanifest` and `sw.js`: updated app description and service-worker cache version.
+
+### Explicit limitations at this milestone
+
+- All eight founding champions currently share the existing sheep renderer; role-specific models, animations, sounds and ability effects are not implemented yet.
+- Fighter choice is stored in the local player state but is not yet synchronized to the Cloudflare multiplayer protocol.
+- The non-sheep factions are previews only and are not playable yet.
+- GitHub Actions is configured for pull requests. No PR has been opened, so no CI run or automated test pass is claimed.
+- Existing production deployment and `main` remain untouched.
+
+### Next safe implementation steps
+
+1. Add a fighter presentation layer so each founding sheep champion has a distinct visual treatment without changing combat balance.
+2. Add a validated ability-definition registry and implement one passive/signature/ultimate end-to-end in local play.
+3. Add fighter identity to multiplayer room state only after protocol versioning and server-authoritative validation are designed.
+4. Introduce the first non-sheep playable fighter as a controlled vertical slice, then expand the Human, Beast, Mythic and Cyber rosters.
