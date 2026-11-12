@@ -15,6 +15,13 @@
     { id: "flock-count-ewe-la", name: "Count Ewe-la", role: "Disruptor", passive: "moonlit-focus", signature: "frost-bite", ultimate: "eclipse-crash" }
   ];
 
+  const humans = [
+    { id: "human-commander-aurex", name: "Commander Aurex", role: "Tactician", passive: "battlefield-read", signature: "solar-volley", ultimate: "legion-overdrive", visual: { renderer: "human", archetype: "commander", primary: "#b98a35", secondary: "#27344f", accent: "#f4d27a" } },
+    { id: "human-nyx-veil", name: "Nyx Veil", role: "Shadow Magister", passive: "umbra-siphon", signature: "shadow-bind", ultimate: "eclipse-cataclysm", visual: { renderer: "human", archetype: "shadow-mage", primary: "#261b49", secondary: "#090b19", accent: "#a88aff" } },
+    { id: "human-kaida-voss", name: "Kaida Voss", role: "Duelist", passive: "flow-state", signature: "crimson-crosscut", ultimate: "dragonstep-flurry", visual: { renderer: "human", archetype: "duelist", primary: "#9d273b", secondary: "#241a25", accent: "#ffb1a2" } },
+    { id: "human-varek-stone", name: "Varek Stone", role: "Vanguard", passive: "unyielding", signature: "titan-guard", ultimate: "ironfall", visual: { renderer: "human", archetype: "vanguard", primary: "#53616a", secondary: "#20272d", accent: "#e2b66b" } }
+  ];
+
   const roster = sheep.map((fighter, index) => Object.freeze({
     ...fighter,
     faction: "Flock",
@@ -30,6 +37,14 @@
     })
   }));
 
+  const humanRoster = humans.map((fighter, index) => Object.freeze({
+    ...fighter, faction: "Human Dynasty", species: "Human", tier: "Dynasty Champion",
+    rosterOrder: sheep.length + index + 1, stats: baseline,
+    visual: Object.freeze(fighter.visual),
+    abilities: Object.freeze({ passive: fighter.passive, signature: fighter.signature, ultimate: fighter.ultimate })
+  }));
+  const completeRoster = Object.freeze([...roster, ...humanRoster]);
+
   function validateFighterRoster(items) {
     if (!Array.isArray(items) || items.length === 0) return false;
     const ids = new Set();
@@ -37,8 +52,8 @@
       if (!fighter || typeof fighter.id !== "string" || ids.has(fighter.id)) return false;
       ids.add(fighter.id);
       return typeof fighter.name === "string" &&
-        fighter.faction === "Flock" &&
-        fighter.species === "Sheep" &&
+        ((fighter.faction === "Flock" && fighter.species === "Sheep" && fighter.visual?.renderer === "sheep") ||
+         (fighter.faction === "Human Dynasty" && fighter.species === "Human" && fighter.visual?.renderer === "human" && typeof fighter.visual.archetype === "string")) &&
         typeof fighter.role === "string" &&
         fighter.stats && ["health", "power", "defense", "speed"].every((key) =>
           Number.isFinite(fighter.stats[key]) && fighter.stats[key] > 0
@@ -48,6 +63,6 @@
     });
   }
 
-  root.BEASTRYX_FIGHTERS = Object.freeze(roster);
+  root.BEASTRYX_FIGHTERS = completeRoster;
   root.BEASTRYX_VALIDATE_FIGHTERS = validateFighterRoster;
 })(typeof window !== "undefined" ? window : globalThis);
